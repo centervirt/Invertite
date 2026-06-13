@@ -4,6 +4,7 @@
  */
 const router    = require('express').Router();
 const userCtrl  = require('../controllers/userController');
+const badgeCtrl = require('../controllers/badgeController');
 const { authenticate, requireSubscription } = require('../middlewares/auth');
 const { validate, rules }                   = require('../middlewares/validate');
 
@@ -26,6 +27,12 @@ router.put('/profile',
 router.get('/dashboard',
   authenticate,
   userCtrl.getDashboard
+);
+
+// GET /api/v1/users/badges (requiere autenticación)
+router.get('/badges',
+  authenticate,
+  badgeCtrl.getUserBadges
 );
 
 module.exports = router;

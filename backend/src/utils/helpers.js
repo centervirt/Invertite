@@ -93,17 +93,33 @@ const serializeUser = (user) => ({
 const calculateStreak = (activityDates) => {
   if (!activityDates || activityDates.length === 0) return 0;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Conjunto de días únicos con actividad (YYYY-MM-DD)
+  // Normalizar fechas a YYYY-MM-DD en la zona horaria local o UTC consistente
   const activeDays = new Set(
-    activityDates.map(d => new Date(d).toISOString().split('T')[0])
+    activityDates.map(d => {
+      const date = new Date(d);
+      // Usamos getUTCFullYear/Month/Date si las fechas vienen de date_trunc (que son fechas sin timezone o con midnight UTC)
+      // O simplemente split('T')[0] si vienen como ISO strings
+      return new Date(d).toISOString().split('T')[0];
+    })
   );
 
-  let streak = 0;
-  const cursor = new Date(today);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
 
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  let cursor = new Date(today);
+  // Si hoy no tiene actividad, pero ayer sí, empezamos a contar desde ayer
+  if (!activeDays.has(todayStr) && activeDays.has(yesterdayStr)) {
+    cursor = new Date(yesterday);
+  } else if (!activeDays.has(todayStr) && !activeDays.has(yesterdayStr)) {
+    return 0;
+  }
+
+  let streak = 0;
   while (true) {
     const dateStr = cursor.toISOString().split('T')[0];
     if (activeDays.has(dateStr)) {

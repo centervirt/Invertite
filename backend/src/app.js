@@ -76,8 +76,9 @@ app.get('/health', (req, res) => {
 // ── Rutas API v1 ──────────────────────────────────────────────
 app.use('/api/v1/auth',  authLimiter, require('./routes/auth.routes'));
 app.use('/api/v1/users',             require('./routes/users.routes'));
+app.use('/api/v1/modules',           require('./routes/modules.routes'));
+app.use('/api/v1/quizzes',           require('./routes/quizzes.routes'));
 // Próximas etapas:
-// app.use('/api/v1/modules',   require('./routes/modules.routes'));
 // app.use('/api/v1/simulator', require('./routes/simulator.routes'));
 // app.use('/api/v1/tutor',     require('./routes/tutor.routes'));
 // app.use('/api/v1/payments',  require('./routes/payments.routes'));
