@@ -17,8 +17,8 @@ const pool = new Pool({
   min:                    2,
   idleTimeoutMillis:      30000,
   connectionTimeoutMillis: 5000,
-  // SSL solo en producción
-  ssl: process.env.NODE_ENV === 'production'
+  // SSL: controlado por DB_SSL en .env (false para EasyPanel sin SSL)
+  ssl: process.env.DB_SSL === 'true'
     ? { rejectUnauthorized: false }
     : false,
 });
