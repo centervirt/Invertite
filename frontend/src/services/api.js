@@ -1,9 +1,9 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-// Instancia base de Axios
+// Instancia base de Axios usando VITE_API_URL o fallback local
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// ── Response interceptor: manejo de errores ──
+// ── Response interceptor: manejo de errores y refresh token ──
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -35,14 +35,18 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('invertite_refresh_token')
         if (!refreshToken) throw new Error('No refresh token')
 
-        const { data } = await axios.post('/api/auth/refresh', { refreshToken })
-        localStorage.setItem('invertite_token', data.data.accessToken)
-        originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`
+        const { data } = await axios.post(`${api.defaults.baseURL}/auth/refresh`, { refreshToken })
+        
+        const newAccessToken = data.data.accessToken
+        localStorage.setItem('invertite_token', newAccessToken)
+        
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return api(originalRequest)
       } catch (refreshError) {
         // Si el refresh falla, cerrar sesión
         localStorage.removeItem('invertite_token')
         localStorage.removeItem('invertite_refresh_token')
+        localStorage.removeItem('invertite_user')
         window.location.href = '/login'
         return Promise.reject(refreshError)
       }
@@ -58,7 +62,6 @@ api.interceptors.response.use(
     } else if (error.response?.status >= 500) {
       toast.error('Error del servidor. Intentá de nuevo más tarde.')
     }
-    // Los errores 400/422 los manejan los componentes individualmente
 
     return Promise.reject({ ...error, userMessage: message })
   }

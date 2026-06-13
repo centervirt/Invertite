@@ -33,6 +33,11 @@ export default {
           600: '#1c2a20',
           500: '#243328',
         },
+        'invertite-dark': '#0B0F1A',
+        'invertite-card': '#111827',
+        'accent-teal': '#00C9A7',
+        'accent-blue': '#3B82F6',
+        'accent-gold': '#F5A623',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
