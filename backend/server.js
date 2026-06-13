@@ -3,6 +3,8 @@ const app = require('./src/app');
 
 const PORT = process.env.PORT || 3001;
 
+const subscriptionChecker = require('./src/services/subscriptionChecker');
+
 const server = app.listen(PORT, () => {
   console.log(`
   ╔══════════════════════════════════════════╗
@@ -13,6 +15,10 @@ const server = app.listen(PORT, () => {
   ║  📡 URL: http://localhost:${PORT}         ║
   ╚══════════════════════════════════════════╝
   `);
+  
+  if (process.env.NODE_ENV !== 'test') {
+    subscriptionChecker.start();
+  }
 });
 
 // Graceful shutdown para PM2
