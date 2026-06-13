@@ -8,7 +8,11 @@
     "start": "node server.js",
     "test": "jest --runInBand --forceExit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "db:migrate": "node src/config/migrate.js",
+    "db:status": "node src/config/migrate.js --status",
+    "db:reset": "node src/config/migrate.js --reset && node src/config/migrate.js",
+    "db:setup": "node src/config/setup-db.js"
   },
   "keywords": [
     "finanzas",
