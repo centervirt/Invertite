@@ -80,6 +80,7 @@ app.use('/api/v1/modules',           require('./routes/modules.routes'));
 app.use('/api/v1/quizzes',           require('./routes/quizzes.routes'));
 app.use('/api/v1/payments',          require('./routes/payments.routes'));
 app.use('/api/v1/tutor',             require('./routes/tutor.routes'));
+app.use('/api/v1/market',            require('./routes/market.routes'));
 // Próximas etapas:
 // app.use('/api/v1/simulator', require('./routes/simulator.routes'));
 
