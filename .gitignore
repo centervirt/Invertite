@@ -1,0 +1,68 @@
+# ================================
+# INVERTITE — .gitignore
+# ================================
+
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Variables de entorno (NUNCA commitear)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+
+# Build / dist
+dist/
+build/
+frontend/dist/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Coverage de tests
+coverage/
+.nyc_output/
+
+# Caché
+.cache/
+.parcel-cache/
+.vite/
+
+# Sistema operativo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# PM2
+.pm2/
+
+# Uploads temporales
+backend/uploads/
+backend/temp/
+
+# Archivos de certificados
+*.pem
+*.key
+*.crt

@@ -1,0 +1,67 @@
+{
+  "name": "invertite-backend",
+  "version": "1.0.0",
+  "description": "API REST para Invertite - Plataforma de educación financiera argentina",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [
+    "finanzas",
+    "argentina",
+    "educacion",
+    "inversiones"
+  ],
+  "author": "Invertite",
+  "license": "ISC",
+  "nodemonConfig": {
+    "watch": [
+      "src",
+      "server.js"
+    ],
+    "ext": "js,json",
+    "ignore": [
+      "node_modules",
+      "*.test.js"
+    ],
+    "delay": 1000
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/*.test.js"
+    ],
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "src/**/*.js"
+    ]
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dayjs": "^1.11.21",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.2",
+    "express-validator": "^7.3.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "mercadopago": "^3.1.0",
+    "morgan": "^1.11.0",
+    "multer": "^2.1.1",
+    "pg": "^8.21.0",
+    "redis": "^6.0.0",
+    "uuid": "^14.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  }
+}
