@@ -14,6 +14,7 @@ let userToken = null;
 let userId = null;
 let lessonId = null;
 let moduleId = null;
+let testPlanId = null;
 
 const testUser = {
   email: `test_tutor_${Date.now()}@invertite.ar`,
@@ -32,7 +33,26 @@ beforeAll(async () => {
   userId = userRes.rows[0].id;
   userToken = generateAccessToken(userRes.rows[0]);
 
-  // 2. Crear Módulo y Lección de prueba para asociar la conversación
+  // 2. Obtener plan mensual (o crearlo) para la suscripción del test
+  const planRes = await pool.query(`SELECT id FROM plans WHERE slug = 'monthly'`);
+  if (planRes.rows.length > 0) {
+    testPlanId = planRes.rows[0].id;
+  } else {
+    const newPlan = await pool.query(
+      `INSERT INTO plans (name, slug, price_ars, interval, is_active)
+       VALUES ('Mensual Test', 'monthly', 4990, 'monthly', true) RETURNING id`
+    );
+    testPlanId = newPlan.rows[0].id;
+  }
+
+  // 3. Crear suscripción activa (requerida para chatear con el tutor)
+  await pool.query(
+    `INSERT INTO subscriptions (user_id, plan_id, status, current_period_start, current_period_end)
+     VALUES ($1, $2, 'active', NOW(), NOW() + INTERVAL '30 days')`,
+    [userId, testPlanId]
+  );
+
+  // 4. Crear Módulo y Lección de prueba
   const modRes = await pool.query(
     `INSERT INTO modules (order_index, title, slug, description, color_accent, estimated_hours, is_published)
      VALUES (99999, 'Modulo Test Tutor', 'modulo-test-tutor', 'Modulo para tutor', 'emerald', 1.0, true)
@@ -62,6 +82,8 @@ afterAll(async () => {
 
 describe('=== ETAPA 6: API REST — TUTOR IA CON RAG ===', () => {
 
+  let createdConversationId = null;
+
   describe('POST /api/v1/tutor/chat (General - sin Lección)', () => {
     it('✅ Inicia chat y devuelve respuesta del tutor (modo mock)', async () => {
       const res = await request(app)
@@ -71,10 +93,12 @@ describe('=== ETAPA 6: API REST — TUTOR IA CON RAG ===', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('response');
+      expect(res.body.data).toHaveProperty('reply');
       expect(res.body.data).toHaveProperty('sources');
       expect(res.body.data).toHaveProperty('conversationId');
-      expect(res.body.data.response).toContain('Tutor IA');
+      expect(res.body.data.reply).toContain('Tutor IA');
+      
+      createdConversationId = res.body.data.conversationId;
     });
 
     it('❌ Rechaza mensaje vacío', async () => {
@@ -97,41 +121,44 @@ describe('=== ETAPA 6: API REST — TUTOR IA CON RAG ===', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.data.response).toContain('Tutor IA');
-
-      // Consultar historial
-      const historyRes = await request(app)
-        .get(`/api/v1/tutor/conversations/${lessonId}`)
-        .set('Authorization', `Bearer ${userToken}`);
-
-      expect(historyRes.status).toBe(200);
-      expect(historyRes.body.success).toBe(true);
-      expect(historyRes.body.data.messages.length).toBe(2);
-      expect(historyRes.body.data.messages[0].role).toBe('user');
-      expect(historyRes.body.data.messages[1].role).toBe('assistant');
+      expect(res.body.data.reply).toContain('Tutor IA');
     });
   });
 
-  describe('GET /api/v1/tutor/conversations/:lessonId', () => {
-    it('✅ Obtiene el historial general', async () => {
+  describe('GET /api/v1/tutor/conversations', () => {
+    it('✅ Obtiene el listado de conversaciones del usuario', async () => {
       const res = await request(app)
-        .get('/api/v1/tutor/conversations/general')
+        .get('/api/v1/tutor/conversations')
         .set('Authorization', `Bearer ${userToken}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.data[0]).toHaveProperty('lastMessagePreview');
+    });
+  });
+
+  describe('GET /api/v1/tutor/conversations/:id', () => {
+    it('✅ Obtiene el historial completo de una conversación por su ID', async () => {
+      const res = await request(app)
+        .get(`/api/v1/tutor/conversations/${createdConversationId}`)
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(Array.isArray(res.body.data.messages)).toBe(true);
       expect(res.body.data.messages.length).toBeGreaterThan(0);
     });
 
-    it('✅ Retorna arreglo vacío si no hay conversación para la lección', async () => {
+    it('❌ Retorna 404 si la conversación no existe o no pertenece al usuario', async () => {
       const unusedUUID = 'e7208761-9c60-4824-a212-32b0c3676c38';
       const res = await request(app)
         .get(`/api/v1/tutor/conversations/${unusedUUID}`)
         .set('Authorization', `Bearer ${userToken}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data.messages).toEqual([]);
+      expect(res.status).toBe(404);
+      expect(res.body.success).toBe(false);
     });
   });
 
