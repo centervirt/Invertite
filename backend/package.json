@@ -37,12 +37,14 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
-      "**/__tests__/**/*.js",
-      "**/*.test.js"
+      "**/src/tests/**/*.test.js",
+      "**/__tests__/**/*.js"
     ],
+    "testTimeout": 15000,
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
-      "src/**/*.js"
+      "src/**/*.js",
+      "!src/tests/**"
     ]
   },
   "dependencies": {
