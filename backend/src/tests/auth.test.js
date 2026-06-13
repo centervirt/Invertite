@@ -2,9 +2,14 @@
  * INVERTITE — Tests de Autenticación
  * Cubre: register, login, token inválido, refresh
  *
- * Requiere: PostgreSQL y Redis corriendo con datos de test
- * Variables: TEST_DB_* o usa el .env normal
+ * Redis es mockeado con implementación in-memory (no requiere Redis corriendo).
+ * PostgreSQL: usa la DB real de EasyPanel (variables de .env)
  */
+
+// ── Mock de Redis ANTES de cualquier require ────────────────────────────────
+const redisMock = require('./__mocks__/redis.mock');
+jest.mock('../config/redis', () => require('./__mocks__/redis.mock'));
+
 const request = require('supertest');
 const app     = require('../../src/app');
 const { pool } = require('../../src/config/database');
@@ -20,7 +25,10 @@ let accessToken   = null;
 let refreshToken  = null;
 let userId        = null;
 
-// ── Cleanup ───────────────────────────────────────────────────
+// ── Cleanup ────────────────────────────────────────────────────────────
+// No limpiar Redis entre tests individuales — los tokens deben persistir
+// para que el flujo register → login → refresh → logout funcione en secuencia
+
 afterAll(async () => {
   // Eliminar usuario de test
   if (userId) {
