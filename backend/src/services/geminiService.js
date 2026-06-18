@@ -17,8 +17,7 @@ const getGeminiClient = () => {
 };
 
 const GeminiService = {
-  // Generar respuesta del tutor financiero
-  async chat(messages, ragContext = '', lessonContext = null) {
+  async chat(messages, ragContext = '', lessonContext = null, portfolioContext = '') {
     const client = getGeminiClient();
     
     // Modo Mock para testing o si no hay API key válida
@@ -47,11 +46,14 @@ ${ragContext || 'No hay datos del contexto actual de mercado disponibles.'}
 LECCIÓN ACTUAL DEL USUARIO:
 ${lessonContext ? `Título: ${lessonContext.title}\nDescripción: ${lessonContext.description || ''}\nMódulo: ${lessonContext.moduleTitle || ''}` : 'No hay lección actual seleccionada.'}
 
+CONTEXTO ADICIONAL DEL USUARIO (PORTAFOLIO):
+${portfolioContext || 'El usuario no tiene una cartera cargada aún.'}
+
 Respondé de forma clara y concisa. Máximo 3 párrafos por respuesta.
 Si el usuario hace una pregunta muy amplia, enfocate en lo más relevante para su lección actual y ofrecé profundizar después.`;
 
     const model = client.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction
     });
 
@@ -65,7 +67,7 @@ Si el usuario hace una pregunta muy amplia, enfocate en lo más relevante para s
     const response = await model.generateContent({
       contents: formattedContents,
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: 8192,
         temperature: 0.3
       }
     });

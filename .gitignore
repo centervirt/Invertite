@@ -66,3 +66,10 @@ backend/temp/
 *.pem
 *.key
 *.crt
+
+# Test execution logs and check scripts (NeuraSolutions)
+backend/exec*.json
+backend/workflows*.json
+backend/check_*.js
+backend/temp_*.js
+backend/test_*.js

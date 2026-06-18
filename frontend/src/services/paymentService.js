@@ -19,6 +19,11 @@ const paymentService = {
   async getStatus() {
     const { data } = await api.get('/payments/status')
     return data.data // Contiene hasActiveSubscription, subscription, plan
+  },
+
+  async cancelSubscription(subscriptionId) {
+    const { data } = await api.post('/payments/cancel', { subscriptionId })
+    return data.data
   }
 }
 

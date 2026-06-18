@@ -2,6 +2,8 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'
+import { MarketDataProvider } from './components/MarketDataProvider'
+
 
 // Páginas
 import Landing from './pages/Landing'
@@ -15,6 +17,13 @@ import TutorChat from './pages/TutorChat'
 import Profile from './pages/Profile'
 import Checkout from './pages/Checkout'
 import PaymentResult from './pages/PaymentResult'
+import AdminMetrics from './pages/AdminMetrics'
+import AdminUsers from './pages/AdminUsers'
+import AdminContent from './pages/AdminContent'
+import Portfolio from './pages/Portfolio'
+import AlertsPage from './pages/AlertsPage'
+import Simulator from './pages/Simulator'
+import Ranking from './pages/Ranking'
 
 // Guard para redirigir a dashboard si el usuario ya está autenticado (para login/registro)
 const PublicOnlyRoute = ({ children }) => {
@@ -28,7 +37,8 @@ const PublicOnlyRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-invertite-dark text-slate-100">
+      <MarketDataProvider>
+        <div className="min-h-screen bg-invertite-dark text-slate-100">
         <Routes>
           {/* Rutas Públicas */}
           <Route path="/" element={<Landing />} />
@@ -64,6 +74,12 @@ function App() {
             </PrivateRoute>
           } />
 
+          <Route path="/ranking" element={
+            <PrivateRoute requireSub={false}>
+              <Ranking />
+            </PrivateRoute>
+          } />
+
           {/* Rutas Privadas — Con requerimiento de suscripción activa */}
           <Route path="/dashboard" element={
             <PrivateRoute requireSub={true}>
@@ -94,6 +110,44 @@ function App() {
               <TutorChat />
             </PrivateRoute>
           } />
+          
+          <Route path="/cartera" element={
+            <PrivateRoute requireSub={true}>
+              <Portfolio />
+            </PrivateRoute>
+          } />
+
+          <Route path="/simulador" element={
+            <PrivateRoute requireSub={true}>
+              <Simulator />
+            </PrivateRoute>
+          } />
+
+          <Route path="/alertas" element={
+            <PrivateRoute requireSub={true}>
+              <AlertsPage />
+            </PrivateRoute>
+          } />
+
+
+          {/* Rutas de Admin */}
+          <Route path="/admin" element={
+            <PrivateRoute requireSub={false} requireAdmin={true}>
+              <AdminMetrics />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/admin/users" element={
+            <PrivateRoute requireSub={false} requireAdmin={true}>
+              <AdminUsers />
+            </PrivateRoute>
+          } />
+          
+          <Route path="/admin/contenido" element={
+            <PrivateRoute requireSub={false} requireAdmin={true}>
+              <AdminContent />
+            </PrivateRoute>
+          } />
 
           {/* 404 */}
           <Route path="*" element={
@@ -106,6 +160,7 @@ function App() {
           } />
         </Routes>
       </div>
+      </MarketDataProvider>
     </AuthProvider>
   )
 }

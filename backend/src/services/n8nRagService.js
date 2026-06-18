@@ -13,7 +13,7 @@ const N8nRagService = {
     }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos de timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos de timeout
 
     try {
       const body = {
@@ -40,6 +40,7 @@ const N8nRagService = {
 
       const data = await response.json();
       return {
+        reply: data.reply || null,
         context: data.context || '',
         sources: Array.isArray(data.sources) ? data.sources : [],
         market_data: data.market_data || {}

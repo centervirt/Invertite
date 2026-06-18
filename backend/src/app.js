@@ -32,18 +32,22 @@ app.use(cors({
 }));
 
 // ── Rate Limiting ─────────────────────────────────────────────
-// Global: 100 req / 15min por IP
-app.use('/api/', rateLimit({
-  windowMs:       15 * 60 * 1000,
-  max:            100,
-  standardHeaders: true,
-  legacyHeaders:  false,
-  message: { success: false, message: 'Demasiadas solicitudes. Intentá en 15 minutos.' },
-}));
+// Global: 100 req / 15min por IP (deshabilitado en test y desarrollo)
+const globalLimiter = (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs:       15 * 60 * 1000,
+      max:            100,
+      standardHeaders: true,
+      legacyHeaders:  false,
+      message: { success: false, message: 'Demasiadas solicitudes. Intentá en 15 minutos.' },
+    });
+
+app.use('/api/', globalLimiter);
 
 // Auth: 5 req / 15min por IP (más estricto para login/register)
-// En entorno de tests se deshabilita para no interferir
-const authLimiter = process.env.NODE_ENV === 'test'
+// En entorno de tests y desarrollo se deshabilita para no interferir con pruebas
+const authLimiter = (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')
   ? (req, res, next) => next()
   : rateLimit({
       windowMs:        15 * 60 * 1000,
@@ -81,8 +85,14 @@ app.use('/api/v1/quizzes',           require('./routes/quizzes.routes'));
 app.use('/api/v1/payments',          require('./routes/payments.routes'));
 app.use('/api/v1/tutor',             require('./routes/tutor.routes'));
 app.use('/api/v1/market',            require('./routes/market.routes'));
-// Próximas etapas:
-// app.use('/api/v1/simulator', require('./routes/simulator.routes'));
+app.use('/api/v1/admin',             require('./routes/admin.routes'));
+app.use('/api/v1/launch',            require('./routes/publicRoutes'));
+app.use('/api/v1/portfolio',         require('./routes/portfolio.routes'));
+app.use('/api/v1/content',           require('./routes/content.routes'));
+app.use('/api/v1/alerts',            require('./routes/alert.routes'));
+app.use('/api/v1/internal',          require('./routes/internalRoutes'));
+app.use('/api/v1/simulator',         require('./routes/simulator.routes'));
+
 
 // ── 404 ───────────────────────────────────────────────────────
 app.use((req, res) => {

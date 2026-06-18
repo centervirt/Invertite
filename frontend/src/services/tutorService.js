@@ -14,6 +14,11 @@ const tutorService = {
   async getConversation(id) {
     const { data } = await api.get(`/tutor/conversations/${id}`)
     return data.data // Historial completo de la conversación
+  },
+
+  async deleteConversation(id) {
+    const { data } = await api.delete(`/tutor/conversations/${id}`)
+    return data.data
   }
 }
 

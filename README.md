@@ -1,142 +1,72 @@
-# 🇦🇷 Invertite — Plataforma de Educación Financiera Argentina
+# INVERTITE 📈
 
-Aprendé a invertir tu dinero con cursos interactivos, simulador y tutor con IA.
+INVERTITE es una plataforma web interactiva de educación financiera y simulación de inversiones, diseñada específicamente para el público de Argentina que desea dar sus primeros pasos en el mundo de las finanzas y los mercados locales. 
 
-## Stack Tecnológico
+Es una creación exclusiva de **NeuraSolutions**.
 
-| Capa | Tecnología |
-|------|-----------|
-| Backend | Node.js 24 + Express 4 |
-| Base de datos | PostgreSQL 15 |
-| Cache / Sesiones | Redis 7 |
-| Autenticación | JWT + Bcrypt |
-| Frontend | React 18 + Vite 5 + Tailwind CSS 3 |
-| IA Tutor | Gemini 1.5 Flash (Google AI) |
-| Pagos | MercadoPago SDK + Ualá Bis |
-| Deploy | PM2 + Nginx en VPS |
+---
 
-## Requisitos previos
+## 🎯 ¿A dónde apunta el proyecto?
 
-- Node.js >= 20 LTS
-- PostgreSQL 15
-- Redis 7
-- Git
+El objetivo principal de INVERTITE es democratizar la educación financiera, permitiendo que cualquier persona aprenda a gestionar su capital, comprender los instrumentos financieros locales e internacionales y experimentar el trading real en un entorno controlado y libre de riesgos.
 
-## Setup local rápido
+Apunta a resolver la brecha de conocimiento en finanzas a través de:
+* **Módulos Educativos**: Lecciones estructuradas sobre renta fija, renta variable, cauciones, CEDEARs y criptomonedas.
+* **Tutoría con IA**: Un asistente inteligente contextualizado que responde dudas y acompaña el progreso educativo del usuario en lenguaje claro y adaptado al ecosistema argentino.
+* **Simulador de Cartera en Tiempo Real**: Un sistema transaccional de *paper trading* que inicia con $1.000.000 ARS virtuales, pero que utiliza **precios de mercado 100% reales** extraídos de fuentes oficiales para que los usuarios pongan a prueba sus estrategias sin arriesgar capital real.
+* **Gamificación y Rankings**: Tablas de posiciones comunitarias anónimas (semanal, mensual e histórica) para fomentar una competencia sana basada en rendimientos efectivos de las carteras virtuales.
 
-### 1. Clonar repositorio
-```bash
-git clone https://github.com/TU_USUARIO/invertite.git
-cd invertite
-```
+---
 
-### 2. Configurar variables de entorno
-```bash
-cp .env.example backend/.env
-# Editar backend/.env con tus credenciales locales
-```
+## 🛠️ Tecnologías del Proyecto
 
-### 3. Instalar dependencias
-```bash
-# Backend
-cd backend && npm install
-
-# Frontend
-cd ../frontend && npm install
-```
-
-### 4. Crear base de datos PostgreSQL
-```sql
-CREATE USER invertite_user WITH PASSWORD 'tu_password';
-CREATE DATABASE invertite_db OWNER invertite_user;
-```
-
-### 5. Ejecutar migraciones
-```bash
-cd backend
-psql -U invertite_user -d invertite_db -f migrations/001_init.sql
-```
-
-### 6. Iniciar en desarrollo
-```bash
-# Terminal 1 — Backend (puerto 3001)
-cd backend && npm run dev
-
-# Terminal 2 — Frontend (puerto 5173)
-cd frontend && npm run dev
-```
-
-### 7. Verificar
-- Frontend: http://localhost:5173
-- API Health: http://localhost:3001/api/health
-
-## Estructura del proyecto
-
-```
-invertite/
-├── backend/
-│   ├── src/
-│   │   ├── config/       → db.js, redis.js, gemini.js
-│   │   ├── controllers/  → Lógica de rutas
-│   │   ├── middlewares/  → auth, errorHandler, rateLimiter
-│   │   ├── models/       → Queries SQL
-│   │   ├── routes/       → Definición de endpoints
-│   │   ├── services/     → Lógica de negocio
-│   │   └── utils/        → Helpers y validadores
-│   ├── migrations/       → Scripts SQL
-│   ├── server.js
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/   → UI reutilizables
-│   │   ├── pages/        → Vistas
-│   │   ├── hooks/        → Custom hooks
-│   │   ├── context/      → Auth, Theme, etc.
-│   │   ├── services/     → Clientes Axios
-│   │   └── assets/       → Imágenes, íconos
-│   ├── vite.config.js
-│   └── package.json
-│
-├── nginx/                → Configuración para VPS
-├── .env.example
-├── .gitignore
-└── README.md
-```
-
-## Scripts disponibles
+El ecosistema de INVERTITE está construido con una arquitectura moderna:
 
 ### Backend
-```bash
-npm run dev       # Desarrollo con nodemon
-npm start         # Producción
-npm test          # Tests con Jest
-npm run test:coverage
-```
+* **Node.js** & **Express** para el servidor API REST.
+* **PostgreSQL** como base de datos relacional para el manejo seguro de usuarios, transacciones, portfolios y progresos.
+* **Redis** como base de caché en memoria para optimizar la velocidad de carga de las cotizaciones y sesiones.
+* Integración con APIs de mercado y scraping resiliente para cotizaciones en vivo (Dólar MEP, CCL, Blue, CEDEARs, Criptomonedas, FCIs y Cauciones).
 
 ### Frontend
+* **React** con **Vite** para una experiencia SPA (Single Page Application) rápida y dinámica.
+* **Tailwind CSS** para un diseño moderno con estéticas oscuras de alto rendimiento visual.
+* **Chart.js** para renderizar gráficos interactivos del historial y evolución del portfolio.
+
+---
+
+## 🚀 Despliegue Local
+
+### Requisitos Previos
+* Node.js (v18 o superior)
+* PostgreSQL
+* Redis
+
+### 1. Clonar el repositorio
 ```bash
-npm run dev       # Vite dev server (port 5173)
-npm run build     # Build de producción
-npm run preview   # Preview del build
+git clone https://github.com/centervirt/Invertite.git
+cd Invertite
 ```
 
-## Etapas de desarrollo
+### 2. Configurar Variables de Entorno (.env)
+Crea un archivo `.env` en la carpeta `backend/` basándote en las variables requeridas (como credenciales de DB, Redis y API Keys de IA) y asegúrate de no subirlo al repositorio.
 
-- [x] Etapa 1: Estructura inicial e inicialización
-- [ ] Etapa 2: Autenticación (JWT + Bcrypt)
-- [ ] Etapa 3: Módulos de aprendizaje (cursos + lecciones)
-- [ ] Etapa 4: Simulador de inversiones
-- [ ] Etapa 5: IA Tutor (Gemini)
-- [ ] Etapa 6: Pagos (MercadoPago + Ualá Bis)
-- [ ] Etapa 7: Deploy en VPS
+### 3. Iniciar el Servidor Backend
+```bash
+cd backend
+npm install
+npm run dev
+```
 
-## Variables de entorno
+### 4. Iniciar el Servidor Frontend
+```bash
+cd ../frontend
+npm install
+npm run dev
+```
 
-Ver [`.env.example`](.env.example) para la lista completa documentada.
+Abre **[http://localhost:5173](http://localhost:5173)** en tu navegador para empezar.
 
-> ⚠️ **Nunca commitear el archivo `.env` real al repositorio.**
+---
 
-## Licencia
-
-Privado — Todos los derechos reservados © 2026 Invertite
+*Creado con orgullo por **NeuraSolutions** © 2026.*

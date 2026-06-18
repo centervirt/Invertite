@@ -18,4 +18,7 @@ router.post('/uala/webhook', paymentCtrl.ualaWebhook); // Público
 // Estado de suscripción
 router.get('/status', authenticate, paymentCtrl.getStatus);
 
+// Cancelar suscripción
+router.post('/cancel', authenticate, paymentCtrl.cancelSubscription);
+
 module.exports = router;

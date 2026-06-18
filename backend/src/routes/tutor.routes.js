@@ -12,5 +12,6 @@ router.post('/chat', authenticate, requireSubscription, tutorCtrl.chat);
 // GET /api/v1/tutor/conversations (requiere sólo autenticación para ver el historial)
 router.get('/conversations', authenticate, tutorCtrl.getConversationsList);
 router.get('/conversations/:id', authenticate, tutorCtrl.getConversationById);
+router.delete('/conversations/:id', authenticate, tutorCtrl.deleteConversation);
 
 module.exports = router;

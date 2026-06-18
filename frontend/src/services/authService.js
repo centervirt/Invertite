@@ -11,8 +11,8 @@ const authService = {
     return data.data // Contiene user, accessToken, refreshToken
   },
 
-  async logout(refreshToken) {
-    const { data } = await api.post('/auth/logout', { refreshToken })
+  async logout(refreshToken, userId) {
+    const { data } = await api.post('/auth/logout', { refreshToken, userId })
     return data
   },
 

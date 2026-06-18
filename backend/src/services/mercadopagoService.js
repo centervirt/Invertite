@@ -4,6 +4,7 @@
  */
 const { query, queryOne } = require('../config/database');
 const SubscriptionService = require('./subscriptionService');
+const LaunchService = require('./launchService');
 const crypto = require('crypto');
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
@@ -35,7 +36,10 @@ const MercadoPagoService = {
 
   // 1. Suscripción Mensual / Anual (Preapproval)
   async createSubscription(userId, planId) {
-    const plan = await queryOne(`SELECT id, name, price_ars, interval FROM plans WHERE id = $1`, [planId]);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+    const plan = isUuid
+      ? await queryOne(`SELECT id, name, slug, price_ars, interval FROM plans WHERE id = $1`, [planId])
+      : await queryOne(`SELECT id, name, slug, price_ars, interval FROM plans WHERE slug = $1`, [planId]);
     if (!plan) throw new Error('El plan especificado no existe.');
 
     const user = await queryOne(`SELECT email FROM users WHERE id = $1`, [userId]);
@@ -55,7 +59,7 @@ const MercadoPagoService = {
       };
     }
 
-    const price = parseFloat(plan.price_ars);
+    const price = await LaunchService.getCurrentPrice(plan.slug);
     const frequency = 1;
     const frequencyType = plan.interval === 'yearly' ? 'years' : 'months';
 
@@ -94,7 +98,10 @@ const MercadoPagoService = {
 
   // 2. Pago único Lifetime (Preference)
   async createPaymentPreference(userId, planId) {
-    const plan = await queryOne(`SELECT id, name, price_ars FROM plans WHERE id = $1`, [planId]);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+    const plan = isUuid
+      ? await queryOne(`SELECT id, name, slug, price_ars FROM plans WHERE id = $1`, [planId])
+      : await queryOne(`SELECT id, name, slug, price_ars FROM plans WHERE slug = $1`, [planId]);
     if (!plan) throw new Error('El plan especificado no existe.');
 
     const user = await queryOne(`SELECT email FROM users WHERE id = $1`, [userId]);
@@ -115,7 +122,7 @@ const MercadoPagoService = {
       };
     }
 
-    const price = parseFloat(plan.price_ars);
+    const price = await LaunchService.getCurrentPrice(plan.slug);
 
     const body = {
       items: [

@@ -2,7 +2,7 @@ import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const PrivateRoute = ({ children, requireSub = true }) => {
+const PrivateRoute = ({ children, requireSub = true, requireAdmin = false }) => {
   const { user, isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
 
@@ -19,7 +19,12 @@ const PrivateRoute = ({ children, requireSub = true }) => {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // 2. Redirigir a checkout si requiere suscripción activa y no la tiene (los admins no requieren)
+  // 2. Redirigir si requiere admin y no lo es
+  if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  // 3. Redirigir a checkout si requiere suscripción activa y no la tiene (los admins no requieren)
   const hasActiveSub = user.subscription?.status === 'active' || user.role === 'admin'
   if (requireSub && !hasActiveSub) {
     return <Navigate to="/pagar/mensual" replace />

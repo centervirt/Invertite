@@ -18,6 +18,13 @@ const getQuiz = async (req, res, next) => {
     }
 
     const questions = await QuizModel.getQuestionsPublic(quizId);
+    const mappedQuestions = questions.map(q => ({
+      id: q.id,
+      orderIndex: q.order_index,
+      questionText: q.question_text,
+      options: q.options
+    }));
+
     const attempts = await QuizModel.getUserAttempts(userId, quizId);
 
     return res.json(successResponse({
@@ -28,7 +35,7 @@ const getQuiz = async (req, res, next) => {
         quizType: quiz.quiz_type,
         passScore: quiz.pass_score
       },
-      questions,
+      questions: mappedQuestions,
       attempts: attempts.map(att => ({
         id: att.id,
         score: att.score,

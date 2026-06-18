@@ -4,6 +4,7 @@
  */
 const { query, queryOne } = require('../config/database');
 const SubscriptionService = require('./subscriptionService');
+const LaunchService = require('./launchService');
 const crypto = require('crypto');
 
 const UALA_CLIENT_ID = process.env.UALA_CLIENT_ID;
@@ -50,7 +51,10 @@ const UalaBisService = {
 
   // Crear link de pago Ualá Bis
   async createPaymentLink(userId, planId) {
-    const plan = await queryOne(`SELECT id, name, price_ars FROM plans WHERE id = $1`, [planId]);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+    const plan = isUuid
+      ? await queryOne(`SELECT id, name, slug, price_ars FROM plans WHERE id = $1`, [planId])
+      : await queryOne(`SELECT id, name, slug, price_ars FROM plans WHERE slug = $1`, [planId]);
     if (!plan) throw new Error('El plan especificado no existe.');
 
     const user = await queryOne(`SELECT full_name, email FROM users WHERE id = $1`, [userId]);
@@ -64,14 +68,16 @@ const UalaBisService = {
       [userId, planId]
     );
 
+    const currentPrice = await LaunchService.getCurrentPrice(plan.slug);
+
     if (this.isMockMode()) {
       return {
-        payment_url: `https://checkout.uala.com.ar/mock-pay?userId=${userId}&planId=${planId}&amount=${plan.price_ars}`
+        payment_url: `https://checkout.uala.com.ar/mock-pay?userId=${userId}&planId=${planId}&amount=${currentPrice}`
       };
     }
 
     const token = await this.getAccessToken();
-    const amount = parseFloat(plan.price_ars).toFixed(2);
+    const amount = currentPrice.toFixed(2);
 
     const body = {
       amount,

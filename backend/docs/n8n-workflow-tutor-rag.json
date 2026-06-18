@@ -1,0 +1,294 @@
+{
+  "name": "invertite-tutor-rag",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "invertite-tutor",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        112,
+        304
+      ],
+      "id": "3c2d5180-b3c2-494e-b515-2eea3d461a09",
+      "webhookId": "d4dc6aba-fd9a-409b-a55e-66291276455d"
+    },
+    {
+      "parameters": {
+        "url": "https://api.bluelytics.com.ar/v2/latest",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "name": "Obtener tipos de dólar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        288,
+        304
+      ],
+      "id": "f7a0154b-efe2-4f63-a8a3-bd0ddee74b8b",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.bcra.gob.ar/estadisticas/v4.0/monetarias/27",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Obtener tasa de caución",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        480,
+        192
+      ],
+      "id": "6082c08f-eaf2-4685-b539-c9c808d3dc9a"
+    },
+    {
+      "parameters": {
+        "url": "https://api.cafci.org.ar/fondo?estado=1&limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Referer",
+              "value": "https://www.cafci.org.ar/"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Obtener FCIs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        656,
+        192
+      ],
+      "id": "76e75e70-b2e8-462a-9d4e-4f247a175b0d",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://www.rava.com/perfil/AAPL",
+        "options": {}
+      },
+      "name": "Obtener cotizaciones CEDEARs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        832,
+        304
+      ],
+      "id": "382663d4-b346-499b-894f-63efcad549ce",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:6333/collections/invertite_knowledge/points/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"vector\": {{ $('Webhook').item.json.embedding || '[]' }}, \"limit\": 5, \"with_payload\": true}",
+        "options": {}
+      },
+      "name": "Buscar en Vector Store",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1008,
+        304
+      ],
+      "id": "d4681e68-1308-44c0-9b66-83a4de46fb2e",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obtener datos de cada nodo anterior\nconst webhookData = $('Webhook').item.json.body || $('Webhook').item.json || {};\nconst question = webhookData.question || $('Webhook').item.json.question || '';\nconst lessonModule = webhookData.lesson_module || $('Webhook').item.json.lesson_module || '';\nconst userLevel = webhookData.user_level || $('Webhook').item.json.user_level || 'beginner';\nconst portfolioCtx = webhookData.portfolio_context || $('Webhook').item.json.portfolio_context || '';\n\n// Procesar dólar\nlet dolarCtx = 'No disponible';\ntry {\n  let dolarData;\n  try {\n    dolarData = $('Obtener tipos de dólar').item.json;\n  } catch(e) {\n    dolarData = $('Obtener tipos de dolar').item.json;\n  }\n  const dolarObj = dolarData?.data || dolarData || {};\n  const mep = dolarObj.mep?.price || dolarObj.Bolsa?.value_sell || dolarObj.mep?.value_sell || 'N/D';\n  const blue = dolarObj.blue?.price || dolarObj.Informal?.value_sell || dolarObj.blue?.value_sell || 'N/D';\n  const oficial = dolarObj.oficial?.price || dolarObj.Oficial?.value_sell || 'N/D';\n  dolarCtx = \"MEP: $\" + mep + \" | Blue: $\" + blue + \" | Oficial: $\" + oficial;\n} catch(e) { dolarCtx = 'No disponible'; }\n\n// Procesar caución BCRA\nlet caucionCtx = 'No disponible';\ntry {\n  let bcraData;\n  try {\n    bcraData = $('Obtener tasa de caución').item.json;\n  } catch(e) {\n    bcraData = $('Obtener tasa de caucion').item.json;\n  }\n  const bcraObj = bcraData?.data || bcraData || {};\n  if (bcraObj && bcraObj.tna !== undefined && bcraObj.tna !== null) {\n    caucionCtx = bcraObj.tna + \"% TNA\";\n  } else if (bcraData?.results?.length > 0) {\n    const ultima = bcraData.results[bcraData.results.length - 1];\n    if (ultima && ultima.valor !== undefined && ultima.valor !== null) {\n      caucionCtx = ultima.valor + \"% TNA (dato BCRA)\";\n    }\n  }\n} catch(e) { caucionCtx = 'No disponible'; }\n\n// Procesar FCIs\nlet fciCtx = 'No disponible';\ntry {\n  const fcis = $('Obtener FCIs').item.json;\n  if (fcis?.data?.length > 0) {\n    const top3 = fcis.data.slice(0, 3).map(f => \n      f.nombre + \": \" + (f.rentabilidad_anual || 'N/D') + \"% anual\"\n    ).join(' | ');\n    fciCtx = top3;\n  }\n} catch(e) { fciCtx = 'No disponible'; }\n\n// Procesar RAG chunks\nlet ragCtx = '';\ntry {\n  const ragResults = $('Buscar en Vector Store').item.json;\n  if (ragResults?.result?.length > 0) {\n    ragCtx = ragResults.result\n      .map(r => r.payload?.text || '')\n      .filter(t => t.length > 0)\n      .join('\\n---\\n');\n  }\n} catch(e) { ragCtx = ''; }\n\n// Armar contexto final\nconst context = [\n  \"DATOS DEL MERCADO ARGENTINO (actualizados):\",\n  \"- Tipos de cambio: \" + dolarCtx,\n  \"- Caución bursátil: \" + caucionCtx,\n  \"- FCIs destacados: \" + fciCtx,\n  \"\",\n  portfolioCtx ? \"CARTERA DEL USUARIO:\\n\" + portfolioCtx : \"\",\n  \"\",\n  ragCtx ? \"CONTENIDO EDUCATIVO RELEVANTE:\\n\" + ragCtx : \"\",\n  \"\",\n  \"MÓDULO QUE ESTÁ CURSANDO: \" + lessonModule,\n  \"NIVEL DEL USUARIO: \" + userLevel\n].filter(line => line !== null).join('\\n').trim();\n\nreturn [{\n  json: {\n    question,\n    context,\n    lessonModule,\n    userLevel,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "name": "Code - Ensamblar contexto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        304
+      ],
+      "id": "9cddab9a-9bbf-432f-aaa9-bda578b8e408"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"Sos el tutor financiero de Invertite, una plataforma de educación financiera para argentinos que dan sus primeros pasos en el mundo de las inversiones.\\n\\nTU ROL:\\n- Explicás conceptos financieros en lenguaje simple, sin jerga innecesaria\\n- Usás ejemplos siempre en pesos argentinos y referencias al mercado local\\n- Hablás en voseo argentino (vos, tenés, podés, etc.)\\n- Sos paciente, motivador y nunca hacés sentir al usuario ignorante\\n\\nRESTRICCIONES IMPORTANTES:\\n- NUNCA das recomendaciones de inversión específicas como 'comprá tal acción'\\n- SIEMPRE aclará que el contenido es educativo, no asesoramiento financiero\\n- Usá SOLO los datos del contexto provisto para hablar de precios y tasas actuales\\n- Si no tenés el dato exacto, decilo honestamente\\n- No hablés de temas fuera de educación financiera\\n\\nFORMATO DE RESPUESTA:\\n- Usá un tono cercano y motivador\\n- Máximo 3 párrafos por respuesta\\n- Si usás datos de mercado, citá la fuente (ej: 'según BCRA')\\n- Terminá siempre con una pregunta o sugerencia de próximo paso\"\n    }]\n  },\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"CONTEXTO DE MERCADO Y EDUCATIVO:\\n{{ $json.context }}\\n\\nPREGUNTA DEL USUARIO:\\n{{ $json.question }}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 8192,\n    \"topP\": 0.8\n  }\n}",
+        "options": {}
+      },
+      "name": "Llamar a Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1360,
+        304
+      ],
+      "id": "cd746fcc-c86f-446f-8f0d-4a038338ce42"
+    },
+    {
+      "parameters": {
+        "jsCode": "const geminiResponse = $input.item.json;\nlet reply = '';\n\ntry {\n  reply = geminiResponse.candidates[0].content.parts[0].text;\n} catch(e) {\n  reply = 'Lo siento, no pude procesar tu pregunta en este momento. Intentá de nuevo en unos segundos.';\n}\n\n// Determinar fuentes usadas\nconst sources = [];\nconst ctx = $('Code - Ensamblar contexto').item.json.context;\nif (ctx.includes('MEP:') && !ctx.includes('No disponible')) {\n  sources.push({ name: 'Dolarito.ar', type: 'dolar' });\n}\nif (ctx.includes('TNA') && !ctx.includes('No disponible')) {\n  sources.push({ name: 'BCRA', type: 'caucion' });\n}\n\nreturn [{\n  json: {\n    reply,\n    sources,\n    timestamp: new Date().toISOString(),\n    model: 'gemini-2.5-flash'\n  }\n}];"
+      },
+      "name": "Code - Extraer respuesta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        304
+      ],
+      "id": "6fd293f5-f5ff-4a7c-bf23-8287b310d3c6"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        304
+      ],
+      "id": "479d6a5a-3381-4288-b58a-6d232518ab23"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Obtener tipos de dólar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener tipos de dólar": {
+      "main": [
+        [
+          {
+            "node": "Obtener tasa de caución",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener tasa de caución": {
+      "main": [
+        [
+          {
+            "node": "Obtener FCIs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener FCIs": {
+      "main": [
+        [
+          {
+            "node": "Obtener cotizaciones CEDEARs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener cotizaciones CEDEARs": {
+      "main": [
+        [
+          {
+            "node": "Buscar en Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar en Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Code - Ensamblar contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Ensamblar contexto": {
+      "main": [
+        [
+          {
+            "node": "Llamar a Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar a Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Code - Extraer respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extraer respuesta": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

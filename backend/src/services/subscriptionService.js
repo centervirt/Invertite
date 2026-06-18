@@ -4,14 +4,18 @@
 const { query, queryOne, queryAll } = require('../config/database');
 const ProgressService = require('./progressService');
 const redis = require('../config/redis');
+const LaunchService = require('./launchService');
 
 const SubscriptionService = {
   // Activar o actualizar la suscripción de un usuario
   async activateSubscription(userId, planId, providerData = {}) {
     const { provider, providerSubscriptionId, providerPaymentId } = providerData;
 
-    // 1. Obtener detalles del plan
-    const plan = await queryOne(`SELECT id, slug, interval FROM plans WHERE id = $1`, [planId]);
+    // 1. Obtener detalles del plan (soporta UUID o slug)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+    const plan = isUuid
+      ? await queryOne(`SELECT id, slug, interval FROM plans WHERE id = $1`, [planId])
+      : await queryOne(`SELECT id, slug, interval FROM plans WHERE slug = $1`, [planId]);
     if (!plan) throw new Error('El plan especificado no existe.');
 
     // 2. Calcular fecha de fin según el intervalo
@@ -49,6 +53,13 @@ const SubscriptionService = {
 
     // 6. Evaluar y otorgar logros de suscripción
     await ProgressService.checkAndAwardBadges(userId, { type: 'subscription' });
+
+    // 7. Incrementar el contador del lanzamiento
+    try {
+      await LaunchService.incrementCounter();
+    } catch (launchErr) {
+      console.error('Error al incrementar contador de lanzamiento:', launchErr.message);
+    }
 
     return subscription;
   },

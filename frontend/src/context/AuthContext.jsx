@@ -24,8 +24,8 @@ export const AuthProvider = ({ children }) => {
 
           // Validar sesión contra el servidor en segundo plano
           const userData = await authService.me()
-          setUser(userData.user)
-          localStorage.setItem('invertite_user', JSON.stringify(userData.user))
+          setUser(userData)
+          localStorage.setItem('invertite_user', JSON.stringify(userData))
         } catch (err) {
           console.error('Error al verificar sesión:', err)
           // Si expira o falla, el Axios interceptor se encargará de refrescar o cerrar sesión
@@ -88,7 +88,7 @@ export const AuthProvider = ({ children }) => {
     const rToken = localStorage.getItem('invertite_refresh_token')
     if (rToken) {
       try {
-        await authService.logout(rToken)
+        await authService.logout(rToken, user?.id)
       } catch (err) {
         console.error('Error al revocar refresh token en logout:', err)
       }
@@ -107,8 +107,8 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const userData = await authService.me()
-      setUser(userData.user)
-      localStorage.setItem('invertite_user', JSON.stringify(userData.user))
+      setUser(userData)
+      localStorage.setItem('invertite_user', JSON.stringify(userData))
     } catch (err) {
       console.error('Error al actualizar datos de usuario:', err)
     }

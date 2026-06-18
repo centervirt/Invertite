@@ -104,11 +104,29 @@ const getStatus = async (req, res, next) => {
   }
 };
 
+// POST /api/v1/payments/cancel
+const cancelSubscription = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { subscriptionId } = req.body;
+
+    if (!subscriptionId) {
+      return res.status(400).json(errorResponse('subscriptionId es requerido.'));
+    }
+
+    const result = await SubscriptionService.cancelSubscription(userId, subscriptionId);
+    return res.json(successResponse(result, 'Suscripción cancelada con éxito.'));
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   mpSubscribe,
   mpPreference,
   mpWebhook,
   ualaPay,
   ualaWebhook,
-  getStatus
+  getStatus,
+  cancelSubscription
 };

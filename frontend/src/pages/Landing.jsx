@@ -1,20 +1,76 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import api from '../services/api'
+import LaunchBanner from '../components/LaunchBanner'
+import { useMarketData } from '../components/MarketDataProvider'
 
 const Landing = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const [selectedPlan, setSelectedPlan] = useState(null)
+  const [launchStatus, setLaunchStatus] = useState(null)
 
-  // Cotizaciones estáticas para el ticker
+  useEffect(() => {
+    const fetchLaunchStatus = async () => {
+      try {
+        const { data } = await api.get('/launch/status')
+        setLaunchStatus(data.data)
+      } catch (err) {
+        console.error('Error al cargar status de lanzamiento:', err)
+      }
+    }
+    fetchLaunchStatus()
+  }, [])
+
+  const { dolar, caucion } = useMarketData()
+
+  const mepVal = dolar?.mep?.price
+  const cclVal = dolar?.ccl?.price
+  const blueVal = dolar?.blue?.price
+  const oficialVal = dolar?.oficial?.price
+  const mepIsStale = dolar?.mep?.isStale || dolar?.mep?.isVeryStale
+  const cclIsStale = dolar?.ccl?.isStale || dolar?.ccl?.isVeryStale
+  const blueIsStale = dolar?.blue?.isStale || dolar?.blue?.isVeryStale
+  const oficialIsStale = dolar?.oficial?.isStale || dolar?.oficial?.isVeryStale
+
   const cotizaciones = [
-    { name: 'Dólar MEP', value: '$1.248,50', change: '-0.3%', positive: false },
-    { name: 'Dólar CCL', value: '$1.284,20', change: '+0.5%', positive: true },
-    { name: 'S&P Merval', value: '1.580.400', change: '+2.8%', positive: true },
-    { name: 'Plazo Fijo TNA', value: '35.0%', change: 'Estable', positive: true },
-    { name: 'Rendimiento FCI MM', value: '38.2% TEA', change: '+1.2%', positive: true },
-    { name: 'CEDEAR AAPL', value: '$12.450', change: '+1.4%', positive: true },
+    {
+      name: 'Dólar MEP',
+      value: mepVal ? `${mepIsStale ? '~' : ''}$${parseFloat(mepVal).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
+      isFresh: dolar?.mep?.isFresh,
+      positive: true
+    },
+    {
+      name: 'Dólar CCL',
+      value: cclVal ? `${cclIsStale ? '~' : ''}$${parseFloat(cclVal).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
+      isFresh: dolar?.ccl?.isFresh,
+      positive: true
+    },
+    {
+      name: 'Dólar Blue',
+      value: blueVal ? `${blueIsStale ? '~' : ''}$${parseFloat(blueVal).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
+      isFresh: dolar?.blue?.isFresh,
+      positive: true
+    },
+    {
+      name: 'Dólar Oficial',
+      value: oficialVal ? `${oficialIsStale ? '~' : ''}$${parseFloat(oficialVal).toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—',
+      isFresh: dolar?.oficial?.isFresh,
+      positive: true
+    },
+    {
+      name: 'Caución TNA',
+      value: caucion?.tna ? `${!caucion.isFresh ? '~' : ''}${parseFloat(caucion.tna).toFixed(1)}%` : '—',
+      isFresh: caucion?.isFresh,
+      positive: true
+    },
+    {
+      name: 'Plazo Fijo TNA',
+      value: '35.0%',
+      isFresh: true,
+      positive: true
+    }
   ]
 
   // Los 10 módulos educativos de Invertite
@@ -117,9 +173,17 @@ const Landing = () => {
             {/* CTA */}
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
-                <Link to="/dashboard" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-accent-teal to-teal-600 text-invertite-dark hover:brightness-110 active:scale-[0.98] transition-all">
-                  Mi Dashboard
-                </Link>
+                <>
+                  <Link to="/dashboard" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-accent-teal to-teal-600 text-invertite-dark hover:brightness-110 active:scale-[0.98] transition-all">
+                    Mi Dashboard
+                  </Link>
+                  <button 
+                    onClick={logout}
+                    className="text-sm font-semibold text-rose-400 hover:text-rose-300 transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </>
               ) : (
                 <>
                   <Link to="/login" className="text-sm font-semibold text-slate-300 hover:text-white transition-colors">
@@ -140,15 +204,16 @@ const Landing = () => {
         <div className="flex whitespace-nowrap animate-[marquee_25s_linear_infinite] space-x-12">
           {cotizaciones.concat(cotizaciones).map((cot, idx) => (
             <div key={idx} className="inline-flex items-center space-x-2 text-sm font-semibold">
+              {cot.isFresh && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span>
+              )}
               <span className="text-slate-500">{cot.name}</span>
               <span className="text-slate-100">{cot.value}</span>
-              <span className={cot.positive ? 'text-emerald-400' : 'text-rose-400'}>
-                {cot.change}
-              </span>
             </div>
           ))}
         </div>
       </div>
+
 
       {/* ── HERO SECTION ── */}
       <header className="relative py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -282,6 +347,11 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ── LAUNCH BANNER ── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 -mb-8 relative z-10">
+        <LaunchBanner />
+      </div>
+
       {/* ── SECCIÓN PLANES ── */}
       <section id="planes" className="py-24 bg-slate-950 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -295,22 +365,46 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
-            {planes.map((plan) => (
-              <div key={plan.slug} className={`bg-invertite-card border ${plan.accent} rounded-3xl p-8 flex flex-col justify-between relative`}>
-                {plan.recommended && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent-teal text-invertite-dark text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border border-teal-400/30">
-                    Recomendado
-                  </span>
-                )}
-                
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                    <div className="flex items-baseline mt-4">
-                      <span className="text-4xl font-black text-white">{plan.price}</span>
-                      <span className="text-xs text-slate-500 ml-2 font-medium">/ {plan.period}</span>
+            {planes.map((plan) => {
+              const planKeyMap = {
+                mensual: 'mensual',
+                anual: 'anual',
+                vitalicio: 'lifetime'
+              }
+              const launchPlanKey = planKeyMap[plan.slug]
+              const launchInfo = launchStatus?.prices?.[launchPlanKey]
+              
+              const isLaunch = launchStatus?.launchActive && launchInfo?.isLaunch
+              const currentPrice = launchInfo ? `$${launchInfo.current.toLocaleString('es-AR')}` : plan.price
+              const normalPrice = launchInfo ? `$${launchInfo.normal.toLocaleString('es-AR')}` : null
+              const savings = launchInfo && isLaunch ? launchInfo.normal - launchInfo.current : 0
+
+              return (
+                <div key={plan.slug} className={`bg-invertite-card border ${plan.accent} rounded-3xl p-8 flex flex-col justify-between relative`}>
+                  {plan.recommended && (
+                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent-teal text-invertite-dark text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full border border-teal-400/30">
+                      Recomendado
+                    </span>
+                  )}
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{plan.name}</h3>
+                      <div className="mt-4 space-y-1">
+                        {isLaunch && normalPrice && (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm text-slate-500 line-through">{normalPrice}</span>
+                            <span className="bg-emerald-500/10 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20 font-bold">
+                              Ahorrás ${savings.toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex items-baseline">
+                          <span className="text-4xl font-black text-white">{currentPrice}</span>
+                          <span className="text-xs text-slate-500 ml-2 font-medium">/ {plan.period}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
                   <ul className="space-y-3 text-xs text-slate-400 font-light border-t border-slate-900 pt-6">
                     {plan.features.map((feat, index) => (
@@ -331,7 +425,7 @@ const Landing = () => {
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       </section>

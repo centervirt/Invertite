@@ -21,8 +21,9 @@ const Login = () => {
     setIsLoading(true)
 
     try {
-      await login(email, password)
-      navigate(from, { replace: true })
+      const loggedUser = await login(email, password)
+      const target = loggedUser?.role === 'admin' && from === '/dashboard' ? '/admin' : from
+      navigate(target, { replace: true })
     } catch (err) {
       console.error(err)
       setError(err.userMessage || 'Credenciales inválidas. Por favor, verificá tus datos.')

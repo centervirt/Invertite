@@ -1,22 +1,35 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import DashboardLayout from '../components/DashboardLayout'
+import { useAuth } from '../context/AuthContext'
+import WeeklySummary from '../components/WeeklySummary'
 import userService from '../services/userService'
 import tutorService from '../services/tutorService'
 import api from '../services/api'
 import toast from 'react-hot-toast'
 
 const Dashboard = () => {
+  const { user } = useAuth()
   const [dashboardData, setDashboardData] = useState(null)
   const [tickerData, setTickerData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [portfolio, setPortfolio] = useState(null)
 
   // Tutor IA widget state
   const [tutorMessages, setTutorMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [isSending, setIsSending] = useState(false)
 
-  // 1. Cargar datos del dashboard y ticker (polling)
+  // 1. Cargar datos del dashboard, ticker y simulador
+  const loadPortfolio = async () => {
+    try {
+      const { data } = await api.get('/simulator/portfolio')
+      setPortfolio(data.data.portfolio)
+    } catch (err) {
+      console.error('Error al cargar portfolio del simulador en dashboard:', err)
+    }
+  }
+
   const loadDashboardData = async () => {
     try {
       const data = await userService.getDashboard()
@@ -28,8 +41,15 @@ const Dashboard = () => {
 
   const loadTickerData = async () => {
     try {
-      const { data } = await api.get('/market/ticker')
-      setTickerData(data.data)
+      const { data } = await api.get('/market/dolar')
+      const dollars = data.data
+      const formattedTickers = [
+        { name: 'Dólar Oficial', value: dollars.oficial?.price || 0, change: 0 },
+        { name: 'Dólar Blue', value: dollars.blue?.price || 0, change: 0 },
+        { name: 'Dólar MEP', value: dollars.mep?.price || 0, change: 0 },
+        { name: 'Dólar CCL', value: dollars.ccl?.price || 0, change: 0 },
+      ]
+      setTickerData(formattedTickers)
     } catch (err) {
       console.error('Error al cargar cotizaciones:', err)
     }
@@ -49,7 +69,7 @@ const Dashboard = () => {
   useEffect(() => {
     const init = async () => {
       setIsLoading(true)
-      await Promise.all([loadDashboardData(), loadTickerData(), loadTutorHistory()])
+      await Promise.all([loadDashboardData(), loadTickerData(), loadTutorHistory(), loadPortfolio()])
       setIsLoading(false)
     }
     init()
@@ -123,7 +143,7 @@ const Dashboard = () => {
 
         {/* Saludo */}
         <div>
-          <h1 className="text-3xl font-black text-white">¡Hola, {dashboardData?.progress?.fullName || 'Inversor'}! 👋</h1>
+          <h1 className="text-3xl font-black text-white">¡Hola, {user?.fullName || 'Inversor'}! 👋</h1>
           <p className="text-xs text-slate-400 mt-1 font-light">Seguí sumando conocimientos financieros hoy.</p>
         </div>
 
@@ -194,6 +214,51 @@ const Dashboard = () => {
             )}
           </div>
 
+          {/* Tarjeta Resumen del Simulador */}
+          <div className="md:col-span-2 bg-invertite-card border border-slate-900 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-900">
+              <div>
+                <span className="bg-accent-teal/10 text-accent-teal text-[9px] px-2 py-0.5 rounded-full border border-accent-teal/20 font-bold uppercase tracking-wider">
+                  Mercado Virtual
+                </span>
+                <h3 className="text-lg font-bold text-white mt-1">Mi Cartera Simulada</h3>
+              </div>
+              <Link to="/simulador" className="text-xs font-bold text-accent-teal hover:underline">
+                Operar ahora →
+              </Link>
+            </div>
+
+            {portfolio ? (
+              <div className="grid grid-cols-3 gap-4 py-2">
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Valor Total</span>
+                  <span className="text-base font-black text-white block mt-0.5">
+                    ${parseFloat(portfolio.totalValue).toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Efectivo</span>
+                  <span className="text-base font-black text-slate-350 block mt-0.5">
+                    ${parseFloat(portfolio.cashBalance).toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Retorno</span>
+                  <span className={`text-base font-black block mt-0.5 ${parseFloat(portfolio.totalReturnArs) >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                    {parseFloat(portfolio.totalReturnArs) >= 0 ? '+' : ''}{portfolio.totalReturnPct}%
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="py-2 flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-light">Todavía no tenés una cartera simulada creada.</span>
+                <Link to="/simulador" className="px-4 py-2 bg-accent-teal text-slate-950 font-bold rounded-xl text-xs hover:bg-accent-teal/90">
+                  Empezar Simulación
+                </Link>
+              </div>
+            )}
+          </div>
+
           {/* Widget del Tutor IA */}
           <div className="bg-invertite-card border border-slate-900 rounded-3xl p-6 flex flex-col justify-between h-96">
             <div>
@@ -245,11 +310,14 @@ const Dashboard = () => {
               </button>
             </form>
           </div>
-
         </div>
+
+        {/* Resumen Semanal IA */}
+        <WeeklySummary />
 
       </div>
     </DashboardLayout>
+
   )
 }
 

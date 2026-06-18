@@ -70,8 +70,30 @@ const chat = async (req, res, next) => {
     // Agregar el mensaje actual
     const chatHistory = [...dbMessages, userMessage];
 
-    // 5. Consultar a Gemini (enviando la ventana del historial completo)
-    const assistantReply = await GeminiService.chat(chatHistory, ragResult.context, lessonDetails);
+    // 4.5. Construir contexto de portafolio del usuario
+    let portfolioContext = '';
+    try {
+      const portfolio = await queryOne('SELECT id FROM portfolios WHERE user_id = $1', [userId]);
+      if (portfolio) {
+        const positions = await queryAll('SELECT ticker, quantity FROM portfolio_positions WHERE portfolio_id = $1', [portfolio.id]);
+        if (positions.length > 0) {
+          const totalQty = positions.reduce((sum, p) => sum + parseFloat(p.quantity), 0);
+          const items = positions.map(p => {
+            const pct = totalQty > 0 ? ((parseFloat(p.quantity) / totalQty) * 100).toFixed(0) : 0;
+            return `${p.ticker.toUpperCase()} (${pct}%)`;
+          });
+          portfolioContext = `Cartera del usuario: ${items.join(', ')}`;
+        }
+      }
+    } catch (portErr) {
+      console.error('Error al generar contexto de portafolio para Tutor IA:', portErr.message);
+    }
+
+    // 5. Consultar a Gemini (si no viene ya respondido por N8N)
+    let assistantReply = ragResult.reply || null;
+    if (!assistantReply) {
+      assistantReply = await GeminiService.chat(chatHistory, ragResult.context, lessonDetails, portfolioContext);
+    }
 
     const assistantMessage = {
       role: 'assistant',
@@ -132,12 +154,36 @@ const getConversationById = async (req, res, next) => {
     const userId = req.user.id;
     const { id } = req.params;
 
-    const conversation = await queryOne(
-      `SELECT id, lesson_id AS "lessonId", messages, created_at AS "createdAt", updated_at AS "updatedAt"
-       FROM tutor_conversations
-       WHERE id = $1 AND user_id = $2`,
-      [id, userId]
-    );
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (id !== 'general' && !uuidRegex.test(id)) {
+      return res.status(400).json(errorResponse('ID de conversación inválido.'));
+    }
+
+    let conversation;
+    if (id === 'general') {
+      conversation = await queryOne(
+        `SELECT id, lesson_id AS "lessonId", messages, created_at AS "createdAt", updated_at AS "updatedAt"
+         FROM tutor_conversations
+         WHERE user_id = $1 AND lesson_id IS NULL`,
+        [userId]
+      );
+      if (!conversation) {
+        return res.json(successResponse({
+          id: 'general',
+          lessonId: null,
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }, 'Conversación general vacía.'));
+      }
+    } else {
+      conversation = await queryOne(
+        `SELECT id, lesson_id AS "lessonId", messages, created_at AS "createdAt", updated_at AS "updatedAt"
+         FROM tutor_conversations
+         WHERE id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    }
 
     if (!conversation) {
       return res.status(404).json(errorResponse('Conversación no encontrada.'));
@@ -155,8 +201,38 @@ const getConversationById = async (req, res, next) => {
   }
 };
 
+// DELETE /api/v1/tutor/conversations/:id
+const deleteConversation = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (id !== 'general' && !uuidRegex.test(id)) {
+      return res.status(400).json(errorResponse('ID de conversación inválido.'));
+    }
+
+    if (id === 'general') {
+      await query(
+        `DELETE FROM tutor_conversations WHERE user_id = $1 AND lesson_id IS NULL`,
+        [userId]
+      );
+    } else {
+      await query(
+        `DELETE FROM tutor_conversations WHERE id = $1 AND user_id = $2`,
+        [id, userId]
+      );
+    }
+
+    return res.json(successResponse(null, 'Conversación eliminada correctamente.'));
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   chat,
   getConversationsList,
-  getConversationById
+  getConversationById,
+  deleteConversation
 };

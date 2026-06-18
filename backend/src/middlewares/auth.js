@@ -58,6 +58,17 @@ const authenticate = async (req, res, next) => {
  */
 const requireSubscription = async (req, res, next) => {
   try {
+    if (req.user?.role === 'admin') {
+      req.subscription = {
+        id:        'admin-bypass',
+        status:    'active',
+        plan:      'yearly',
+        planName:  'Administrador',
+        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      return next();
+    }
+
     const userWithSub = await UserModel.findByIdWithSubscription(req.user.id);
 
     if (!userWithSub?.sub_status || userWithSub.sub_status !== 'active') {

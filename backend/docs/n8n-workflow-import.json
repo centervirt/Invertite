@@ -1,0 +1,210 @@
+{
+  "name": "invertite-resumen-semanal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "n1-trigger",
+      "name": "Trigger: Lunes 9AM (ARG)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3005/api/v1/market/dolar",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "n2-dolar",
+      "name": "Obtener Dólares (backend local)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 100]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:3005/api/v1/market/caucion",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "n3-caucion",
+      "name": "Obtener Tasa Caución (backend local)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.bluelytics.com.ar/v2/evolution.json?days=7",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "n4-evolucion",
+      "name": "Evolución Dólar Semanal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 500]
+    },
+    {
+      "parameters": {
+        "url": "https://api.merval.ar/api/indice/MERVAL",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "n5-merval",
+      "name": "Índice MERVAL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 700]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================\n// NODO: Armar Prompt para Gemini\n// ================================================\n\n// Obtener fecha actual de Argentina\nconst now = new Date();\nconst weekStart = now.toISOString().split('T')[0];\n\n// --- Datos del dólar ---\nlet dolarData = {};\ntry {\n  const dolarRaw = $('Obtener Dólares (backend local)').first().json;\n  if (dolarRaw && dolarRaw.data) {\n    dolarData = dolarRaw.data;\n  }\n} catch(e) {}\n\nconst mep = dolarData.mep && dolarData.mep.price ? dolarData.mep.price : 'N/D';\nconst ccl = dolarData.ccl && dolarData.ccl.price ? dolarData.ccl.price : 'N/D';\nconst blue = dolarData.blue && dolarData.blue.price ? dolarData.blue.price : 'N/D';\nconst oficial = dolarData.oficial && dolarData.oficial.price ? dolarData.oficial.price : 'N/D';\n\n// --- Datos de caución ---\nlet caucionTna = 'N/D';\ntry {\n  const caucionRaw = $('Obtener Tasa Caución (backend local)').first().json;\n  if (caucionRaw && caucionRaw.data && caucionRaw.data.tna) {\n    caucionTna = caucionRaw.data.tna;\n  }\n} catch(e) {}\n\n// --- Evolución semanal (bluelytics) ---\nlet evolucionResumen = 'Sin datos de evolución disponibles.';\ntry {\n  const evolRaw = $('Evolución Dólar Semanal').first().json;\n  if (Array.isArray(evolRaw) && evolRaw.length > 0) {\n    const primero = evolRaw[0];\n    const ultimo = evolRaw[evolRaw.length - 1];\n    const cambioBlue = ultimo.blue && primero.blue \n      ? ((ultimo.blue.value_sell - primero.blue.value_sell) / primero.blue.value_sell * 100).toFixed(1)\n      : null;\n    evolucionResumen = `Blue: apertura $${primero.blue ? primero.blue.value_sell : 'N/D'}, cierre $${ultimo.blue ? ultimo.blue.value_sell : 'N/D'}${cambioBlue !== null ? ` (${cambioBlue > 0 ? '+' : ''}${cambioBlue}%)` : ''}.`;\n  }\n} catch(e) {}\n\n// --- MERVAL ---\nlet mervalValor = 'N/D';\ntry {\n  const mervalRaw = $('Índice MERVAL').first().json;\n  if (mervalRaw && mervalRaw.valor) mervalValor = mervalRaw.valor;\n  else if (mervalRaw && mervalRaw.data) mervalValor = mervalRaw.data;\n} catch(e) {}\n\n// === CONSTRUIR PROMPT ===\nconst prompt = `Fecha: ${weekStart}\n\nDATOS DE MERCADO ARGENTINO - SEMANA DEL ${weekStart}:\n\n1. DÓLARES:\n   - Dólar MEP: $${mep} ARS\n   - Dólar CCL: $${ccl} ARS  \n   - Dólar Blue: $${blue} ARS\n   - Dólar Oficial: $${oficial} ARS\n\n2. TASAS:\n   - Tasa Caución 1 día (TNA): ${caucionTna}%\n\n3. EVOLUCIÓN SEMANAL DEL DÓLAR:\n   ${evolucionResumen}\n\n4. MERVAL:\n   Índice MERVAL: ${mervalValor}\n\nCon estos datos, generá el resumen semanal del mercado argentino en formato JSON exacto (sin markdown, sin bloques de código, solo el JSON puro).`;\n\nreturn [{\n  json: {\n    prompt,\n    week_start: weekStart,\n    market_data: {\n      mep: typeof mep === 'number' ? mep : parseFloat(mep) || 0,\n      ccl: typeof ccl === 'number' ? ccl : parseFloat(ccl) || 0,\n      blue: typeof blue === 'number' ? blue : parseFloat(blue) || 0,\n      oficial: typeof oficial === 'number' ? oficial : parseFloat(oficial) || 0,\n      caucion_tna: typeof caucionTna === 'number' ? caucionTna : parseFloat(caucionTna) || 0,\n      merval: typeof mervalValor === 'number' ? mervalValor : parseFloat(String(mervalValor).replace(/[^0-9.]/g, '')) || 0\n    }\n  }\n}];"
+      },
+      "id": "n6-armar-prompt",
+      "name": "Armar Prompt para Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AQ.Ab8RN6L-4WjiB4EEHWfLivzCTgzEJsimhrhi51Gfs8vCdsz9mQ",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"Sos el editor financiero de Invertite, una plataforma para inversores argentinos principiantes. Escribís en español rioplatense, sin jerga técnica innecesaria, con datos concretos y ejemplos cotidianos. Generá el resumen semanal del mercado argentino en formato JSON EXACTO con esta estructura (sin bloques markdown, sin texto extra, SOLO el JSON): {\\\"headline\\\": \\\"...\\\", \\\"intro\\\": \\\"...\\\", \\\"sections\\\": [{\\\"title\\\": \\\"...\\\", \\\"body\\\": \\\"...\\\", \\\"instruments\\\": [\\\"...\\\"], \\\"sentiment\\\": \\\"positive\\\"}], \\\"tip_of_week\\\": \\\"...\\\", \\\"market_data_snapshot\\\": {\\\"mep\\\": 0, \\\"ccl\\\": 0, \\\"merval\\\": 0, \\\"caucion_tna\\\": 0}}\"\n    }]\n  },\n  \"contents\": [{\n    \"role\": \"user\",\n    \"parts\": [{\n      \"text\": {{ $json.prompt }}\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.4,\n    \"maxOutputTokens\": 2048\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "n7-gemini",
+      "name": "Llamar Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ================================================\n// NODO: Parsear respuesta de Gemini\n// ================================================\n\nconst response = $input.first().json;\nconst weekStart = $('Armar Prompt para Gemini').first().json.week_start;\nconst marketData = $('Armar Prompt para Gemini').first().json.market_data;\n\n// Extraer el texto de la respuesta Gemini\nlet rawText = '';\ntry {\n  rawText = response.candidates[0].content.parts[0].text;\n} catch(e) {\n  // Si falla la extracción, intentar directamente\n  rawText = JSON.stringify(response);\n}\n\n// Limpiar bloques markdown si los hay\nlet cleanText = rawText\n  .replace(/```json\\s*/gi, '')\n  .replace(/```\\s*/g, '')\n  .trim();\n\n// Intentar parsear el JSON\nlet contentJson;\ntry {\n  contentJson = JSON.parse(cleanText);\n} catch(e) {\n  // Si no es JSON válido, crear una estructura de emergencia\n  contentJson = {\n    headline: \"Resumen Semanal del Mercado Argentino\",\n    intro: cleanText.substring(0, 500) || \"Sin resumen disponible esta semana.\",\n    sections: [\n      {\n        title: \"Tipo de Cambio\",\n        body: `El dólar MEP cerró en $${marketData.mep || 'N/D'} y el blue en $${marketData.blue || 'N/D'}.`,\n        instruments: [\"MEP\", \"BLUE\"],\n        sentiment: \"neutral\"\n      }\n    ],\n    tip_of_week: \"Recordá diversificar tus inversiones para reducir el riesgo.\",\n    market_data_snapshot: {\n      mep: marketData.mep || 0,\n      ccl: marketData.ccl || 0,\n      merval: marketData.merval || 0,\n      caucion_tna: marketData.caucion_tna || 0\n    }\n  };\n}\n\n// Asegurar que market_data_snapshot tiene los datos reales\nif (!contentJson.market_data_snapshot || !contentJson.market_data_snapshot.mep) {\n  contentJson.market_data_snapshot = {\n    mep: marketData.mep || 0,\n    ccl: marketData.ccl || 0,\n    merval: marketData.merval || 0,\n    caucion_tna: marketData.caucion_tna || 0\n  };\n}\n\nreturn [{\n  json: {\n    content_json: contentJson,\n    week_start: weekStart\n  }\n}];"
+      },
+      "id": "n8-parsear",
+      "name": "Parsear Respuesta Gemini",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3005/api/v1/internal/weekly-summary",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-internal-key",
+              "value": "invertite_internal_secret_key_2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ content_json: $json.content_json, week_start: $json.week_start }) }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "n9-publicar",
+      "name": "Publicar en Backend Invertite",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 300]
+    }
+  ],
+  "connections": {
+    "Trigger: Lunes 9AM (ARG)": {
+      "main": [
+        [
+          { "node": "Obtener Dólares (backend local)", "type": "main", "index": 0 },
+          { "node": "Obtener Tasa Caución (backend local)", "type": "main", "index": 0 },
+          { "node": "Evolución Dólar Semanal", "type": "main", "index": 0 },
+          { "node": "Índice MERVAL", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Obtener Dólares (backend local)": {
+      "main": [
+        [{ "node": "Armar Prompt para Gemini", "type": "main", "index": 0 }]
+      ]
+    },
+    "Obtener Tasa Caución (backend local)": {
+      "main": [
+        [{ "node": "Armar Prompt para Gemini", "type": "main", "index": 0 }]
+      ]
+    },
+    "Evolución Dólar Semanal": {
+      "main": [
+        [{ "node": "Armar Prompt para Gemini", "type": "main", "index": 0 }]
+      ]
+    },
+    "Índice MERVAL": {
+      "main": [
+        [{ "node": "Armar Prompt para Gemini", "type": "main", "index": 0 }]
+      ]
+    },
+    "Armar Prompt para Gemini": {
+      "main": [
+        [{ "node": "Llamar Gemini API", "type": "main", "index": 0 }]
+      ]
+    },
+    "Llamar Gemini API": {
+      "main": [
+        [{ "node": "Parsear Respuesta Gemini", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parsear Respuesta Gemini": {
+      "main": [
+        [{ "node": "Publicar en Backend Invertite", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": ["invertite", "resumen-semanal", "gemini"],
+  "meta": {
+    "instanceId": "invertite-local"
+  }
+}

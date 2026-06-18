@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AlertBell from './AlertBell'
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth()
@@ -15,6 +16,10 @@ const DashboardLayout = ({ children }) => {
   const navItems = [
     { name: 'Inicio', path: '/dashboard', icon: '🏠' },
     { name: 'Módulos', path: '/modulos', icon: '📚' },
+    { name: 'Mi Cartera', path: '/cartera', icon: '💼' },
+    { name: 'Simulador', path: '/simulador', icon: '🎮' },
+    { name: 'Ranking', path: '/ranking', icon: '🏆' },
+    { name: 'Alertas', path: '/alertas', icon: '🔔' },
     { name: 'Tutor IA', path: '/tutor', icon: '🤖' },
     { name: 'Mi Perfil', path: '/perfil', icon: '👤' },
   ]
@@ -39,7 +44,9 @@ const DashboardLayout = ({ children }) => {
         </div>
 
         {/* Right: User menu */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
+          <AlertBell />
+          
           <div className="hidden sm:flex flex-col text-right">
             <span className="text-sm font-bold text-white leading-none">{user?.fullName}</span>
             <span className="text-[10px] text-slate-500 mt-1 uppercase font-bold tracking-wider">
@@ -49,7 +56,7 @@ const DashboardLayout = ({ children }) => {
 
           {/* Avatar */}
           <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-accent-teal to-accent-blue flex items-center justify-center font-bold text-invertite-dark text-sm border border-slate-800">
-            {user?.fullName?.charAt(0).toUpperCase()}
+            {user?.fullName?.charAt(0)?.toUpperCase() || 'U'}
           </div>
         </div>
       </header>

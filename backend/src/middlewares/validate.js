@@ -56,8 +56,17 @@ const rules = {
       .isLength({ min: 2, max: 100 }).withMessage('El nombre debe tener entre 2 y 100 caracteres.'),
     body('avatarUrl')
       .optional()
-      .isURL().withMessage('La URL del avatar es inválida.')
-      .isLength({ max: 500 }).withMessage('La URL es demasiado larga.'),
+      .isLength({ max: 500 }).withMessage('El avatar/URL es demasiado largo.')
+      .custom((value) => {
+        if (value && (value.startsWith('http://') || value.startsWith('https://'))) {
+          try {
+            new URL(value);
+          } catch (err) {
+            throw new Error('La URL del avatar es inválida.');
+          }
+        }
+        return true;
+      }),
   ],
 
   refreshToken: [
