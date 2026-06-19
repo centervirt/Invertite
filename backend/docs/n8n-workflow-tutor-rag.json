@@ -33,7 +33,7 @@
         304
       ],
       "id": "f7a0154b-efe2-4f63-a8a3-bd0ddee74b8b",
-      "onError": "continueErrorOutput"
+      "onError": "ignore"
     },
     {
       "parameters": {
@@ -84,7 +84,7 @@
         192
       ],
       "id": "76e75e70-b2e8-462a-9d4e-4f247a175b0d",
-      "onError": "continueErrorOutput"
+      "onError": "ignore"
     },
     {
       "parameters": {
@@ -99,7 +99,7 @@
         304
       ],
       "id": "382663d4-b346-499b-894f-63efcad549ce",
-      "onError": "continueErrorOutput"
+      "onError": "ignore"
     },
     {
       "parameters": {
@@ -127,7 +127,7 @@
         304
       ],
       "id": "embed-question-id-123",
-      "onError": "continueErrorOutput"
+      "onError": "ignore"
     },
     {
       "parameters": {
@@ -146,7 +146,7 @@
         304
       ],
       "id": "d4681e68-1308-44c0-9b66-83a4de46fb2e",
-      "onError": "continueErrorOutput"
+      "onError": "ignore"
     },
     {
       "parameters": {
