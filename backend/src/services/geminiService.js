@@ -53,7 +53,7 @@ Respondé de forma clara y concisa. Máximo 3 párrafos por respuesta.
 Si el usuario hace una pregunta muy amplia, enfocate en lo más relevante para su lección actual y ofrecé profundizar después.`;
 
     const model = client.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.5-flash',
       systemInstruction
     });
 
