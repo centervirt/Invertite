@@ -16,10 +16,15 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 // ── CORS ──────────────────────────────────────────────────────
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
+
+if (process.env.FRONTEND_URL) {
+  const customOrigins = process.env.FRONTEND_URL.split(',').map(o => o.trim());
+  allowedOrigins.push(...customOrigins);
+}
 
 app.use(cors({
   origin: (origin, callback) => {
