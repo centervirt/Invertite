@@ -104,7 +104,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={{ $env.GEMINI_API_KEY }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -116,7 +116,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"model\": \"models/text-embedding-004\", \"content\": {\"parts\": [{\"text\": \"{{ $('Webhook').item.json.question }}\"}]}}",
+        "jsonBody": "={\"model\": \"models/gemini-embedding-001\", \"content\": {\"parts\": [{\"text\": \"{{ $('Webhook').item.json.question }}\"}]}}",
         "options": {}
       },
       "name": "Generar Embedding",
