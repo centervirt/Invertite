@@ -3,7 +3,7 @@ import toast from 'react-hot-toast'
 
 // Instancia base de Axios usando VITE_API_URL o fallback local
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3005/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
