@@ -45,12 +45,11 @@ const MercadoPagoService = {
     const user = await queryOne(`SELECT email FROM users WHERE id = $1`, [userId]);
     if (!user) throw new Error('El usuario no existe.');
 
-    // Guardar registro preliminar en DB en estado 'pending'
     await query(
       `INSERT INTO subscriptions (user_id, plan_id, status, payment_provider, created_at, updated_at)
        VALUES ($1, $2, 'pending', 'mercadopago', NOW(), NOW())
        ON CONFLICT DO NOTHING`,
-      [userId, planId]
+      [userId, plan.id]
     );
 
     if (this.isMockMode()) {
@@ -107,12 +106,11 @@ const MercadoPagoService = {
     const user = await queryOne(`SELECT email FROM users WHERE id = $1`, [userId]);
     if (!user) throw new Error('El usuario no existe.');
 
-    // Registrar en DB preliminarmente
     await query(
       `INSERT INTO subscriptions (user_id, plan_id, status, payment_provider, created_at, updated_at)
        VALUES ($1, $2, 'pending', 'mercadopago', NOW(), NOW())
        ON CONFLICT DO NOTHING`,
-      [userId, planId]
+      [userId, plan.id]
     );
 
     if (this.isMockMode()) {

@@ -53,7 +53,12 @@ api.interceptors.response.use(
     }
 
     // Mensajes de error amigables
-    const message = error.response?.data?.message || 'Error de conexión. Revisá tu internet.'
+    const responseData = error.response?.data
+    let message = responseData?.message || 'Error de conexión. Revisá tu internet.'
+    if (responseData?.errors && Array.isArray(responseData.errors)) {
+      const details = responseData.errors.map(e => e.message).join(' ')
+      message = `${message} ${details}`
+    }
 
     if (error.response?.status === 403) {
       toast.error('No tenés permisos para realizar esta acción.')
