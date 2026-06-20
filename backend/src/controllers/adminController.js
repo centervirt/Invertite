@@ -1,33 +1,73 @@
 /**
  * INVERTITE — Controlador Administrativo
  */
-const { query, queryOne, queryAll } = require('../config/database');
+const { query, queryOne, queryAll, queryPaginated } = require('../config/database');
 const { successResponse, errorResponse } = require('../utils/helpers');
 const redis = require('../config/redis');
+
+// Helper para registrar acciones en admin_actions_log
+const logAdminAction = async (adminId, targetId, action, details) => {
+  try {
+    await query(
+      `INSERT INTO admin_actions_log (admin_user_id, target_user_id, action, details)
+       VALUES ($1, $2, $3, $4)`,
+      [adminId, targetId, action, JSON.stringify(details || {})]
+    );
+  } catch (err) {
+    console.error('❌ Error al guardar log de acción admin:', err.message);
+  }
+};
 
 // ── USUARIOS ──────────────────────────────────────────────────
 
 // GET /api/v1/admin/users
 const listUsers = async (req, res, next) => {
   try {
-    const users = await queryAll(
-      `SELECT 
-         u.id, 
-         u.email, 
-         u.full_name AS "fullName", 
-         u.role, 
-         u.is_active AS "isActive", 
-         u.created_at AS "createdAt",
-         s.status AS "subStatus",
-         p.name AS "planName",
-         COALESCE((SELECT COUNT(*)::int FROM user_progress up WHERE up.user_id = u.id AND up.status = 'completed'), 0) AS "lessonsCompleted"
-       FROM users u
-       LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'
-       LEFT JOIN plans p ON p.id = s.plan_id
-       ORDER BY u.created_at DESC`
-    );
+    const { page, limit = 20, search = '', planSlug = '', isActive = '' } = req.query;
 
-    return res.json(successResponse(users, 'Usuarios listados con éxito.'));
+    let baseQuery = `
+      SELECT 
+        u.id, 
+        u.email, 
+        u.full_name AS "fullName", 
+        u.role, 
+        u.is_active AS "isActive", 
+        u.created_at AS "createdAt",
+        s.status AS "subStatus",
+        p.name AS "planName",
+        COALESCE((SELECT COUNT(*)::int FROM user_progress up WHERE up.user_id = u.id AND up.status = 'completed'), 0) AS "lessonsCompleted"
+      FROM users u
+      LEFT JOIN subscriptions s ON s.user_id = u.id AND s.status = 'active'
+      LEFT JOIN plans p ON p.id = s.plan_id
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (search.trim()) {
+      params.push(`%${search.trim().toLowerCase()}%`);
+      baseQuery += ` AND (LOWER(u.full_name) LIKE $${params.length} OR LOWER(u.email) LIKE $${params.length})`;
+    }
+
+    if (planSlug) {
+      params.push(planSlug);
+      baseQuery += ` AND p.slug = $${params.length}`;
+    }
+
+    if (isActive !== '') {
+      params.push(isActive === 'true');
+      baseQuery += ` AND u.is_active = $${params.length}`;
+    }
+
+    baseQuery += ` ORDER BY u.created_at DESC`;
+
+    if (!page) {
+      const allUsers = await queryAll(baseQuery, params);
+      return res.json(successResponse(allUsers, 'Usuarios listados con éxito.'));
+    }
+
+    const result = await queryPaginated(baseQuery, parseInt(page), parseInt(limit), params);
+    return res.json(successResponse(result, 'Usuarios listados con éxito.'));
   } catch (err) {
     next(err);
   }
@@ -88,7 +128,23 @@ const getUserDetail = async (req, res, next) => {
       [id]
     );
 
-    return res.json(successResponse({ user, badges, progress }, 'Detalle del usuario obtenido.'));
+    // Obtener historial de auditoría del usuario
+    const actionsLog = await queryAll(
+      `SELECT 
+         al.id,
+         al.action,
+         al.details,
+         al.created_at AS "createdAt",
+         admin.full_name AS "adminName",
+         admin.email AS "adminEmail"
+       FROM admin_actions_log al
+       LEFT JOIN users admin ON admin.id = al.admin_user_id
+       WHERE al.target_user_id = $1
+       ORDER BY al.created_at DESC`,
+      [id]
+    );
+
+    return res.json(successResponse({ user, badges, progress, actionsLog }, 'Detalle del usuario obtenido.'));
   } catch (err) {
     next(err);
   }
@@ -98,11 +154,20 @@ const getUserDetail = async (req, res, next) => {
 const updateUserSubscription = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, planSlug } = req.body; // status: 'active' | 'cancelled' | 'expired', planSlug: 'monthly' | 'yearly' | 'lifetime'
+    const { status, planSlug } = req.body; // status: 'active' | 'cancelled' | 'expired' (or 'subscription_extended')
 
     if (!status) {
       return res.status(400).json(errorResponse('El estado (status) es requerido.'));
     }
+
+    // Obtener info anterior de suscripción
+    const oldSub = await queryOne(
+      `SELECT s.id, s.status, p.slug AS "planSlug"
+       FROM subscriptions s
+       JOIN plans p ON p.id = s.plan_id
+       WHERE s.user_id = $1 AND s.status = 'active'`,
+      [id]
+    );
 
     // Desactivar suscripción activa actual
     await query(
@@ -115,6 +180,9 @@ const updateUserSubscription = async (req, res, next) => {
     );
 
     let newSub = null;
+    let actionName = 'subscription_cancelled';
+    let details = { previousStatus: oldSub?.status || 'none', previousPlan: oldSub?.planSlug || 'none' };
+
     if (status === 'active') {
       const slug = planSlug || 'monthly';
       const plan = await queryOne(`SELECT id FROM plans WHERE slug = $1`, [slug]);
@@ -129,9 +197,20 @@ const updateUserSubscription = async (req, res, next) => {
          )
          VALUES ($1, $2, 'active', 'manual', NOW(), NOW() + INTERVAL '1 month', NOW(), NOW())
          RETURNING id, status, current_period_end AS "expiresAt"`,
-        [id, plan.id]
+         [id, plan.id]
       );
+
+      // Si ya tenía suscripción activa y se activa de nuevo, se considera una extensión o reactivación
+      if (oldSub) {
+        actionName = 'subscription_extended';
+      } else {
+        actionName = 'subscription_activated';
+      }
+      details.newPlan = slug;
     }
+
+    // Registrar en auditoría
+    await logAdminAction(req.user.id, id, actionName, details);
 
     // Invalidar caché de Redis
     await redis.del(redis.KEYS.cache(`dashboard:${id}`));
@@ -160,11 +239,81 @@ const resetUserProgress = async (req, res, next) => {
     await query('DELETE FROM user_badges WHERE user_id = $1', [id]);
     await query('DELETE FROM tutor_conversations WHERE user_id = $1', [id]);
 
+    // Registrar en auditoría
+    await logAdminAction(req.user.id, id, 'user_progress_reset', { reset_at: new Date().toISOString() });
+
     // Invalidar caché de Redis del usuario
     await redis.del(redis.KEYS.cache(`dashboard:${id}`));
     await redis.del(redis.KEYS.cache(`modules:list:${id}`));
 
     return res.json(successResponse(null, 'Progreso de curso del usuario reiniciado con éxito.'));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// PUT /api/v1/admin/users/:id/status
+const updateUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    if (isActive === undefined) {
+      return res.status(400).json(errorResponse('El campo isActive es requerido.'));
+    }
+
+    const user = await queryOne(
+      `UPDATE users 
+       SET is_active = $2, updated_at = NOW() 
+       WHERE id = $1 
+       RETURNING id, email, is_active AS "isActive"`,
+      [id, !!isActive]
+    );
+
+    if (!user) {
+      return res.status(404).json(errorResponse('Usuario no encontrado.'));
+    }
+
+    // Registrar acción de auditoría
+    const action = !!isActive ? 'user_activated' : 'user_deactivated';
+    await logAdminAction(req.user.id, id, action, { isActive: !!isActive });
+
+    // Invalidar caché de Redis del usuario
+    await redis.del(redis.KEYS.cache(`dashboard:${id}`));
+    await redis.del(redis.KEYS.cache(`modules:list:${id}`));
+
+    return res.json(successResponse(user, `Estado del usuario actualizado a ${!!isActive ? 'Activo' : 'Inactivo'}.`));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/v1/admin/users/:id
+const deactivateOrDeleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Hacemos soft delete: is_active = false
+    const user = await queryOne(
+      `UPDATE users 
+       SET is_active = false, updated_at = NOW() 
+       WHERE id = $1 
+       RETURNING id, email, is_active AS "isActive"`,
+      [id]
+    );
+
+    if (!user) {
+      return res.status(404).json(errorResponse('Usuario no encontrado.'));
+    }
+
+    // Registrar acción de auditoría
+    await logAdminAction(req.user.id, id, 'user_deleted', { softDelete: true });
+
+    // Invalidar caché de Redis del usuario
+    await redis.del(redis.KEYS.cache(`dashboard:${id}`));
+    await redis.del(redis.KEYS.cache(`modules:list:${id}`));
+
+    return res.json(successResponse(user, 'Usuario desactivado (soft delete) con éxito.'));
   } catch (err) {
     next(err);
   }
@@ -416,6 +565,8 @@ module.exports = {
   getUserDetail,
   updateUserSubscription,
   resetUserProgress,
+  updateUserStatus,
+  deactivateOrDeleteUser,
   listModules,
   createModule,
   updateModule,

@@ -88,7 +88,7 @@ const MercadoPagoService = {
         `UPDATE subscriptions 
          SET provider_subscription_id = $1 
          WHERE user_id = $2 AND plan_id = $3 AND status = 'pending'`,
-        [mpRes.id, userId, planId]
+        [mpRes.id, userId, plan.id]
       );
     }
 

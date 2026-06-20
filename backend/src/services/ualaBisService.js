@@ -65,7 +65,7 @@ const UalaBisService = {
       `INSERT INTO subscriptions (user_id, plan_id, status, payment_provider, created_at, updated_at)
        VALUES ($1, $2, 'pending', 'uala', NOW(), NOW())
        ON CONFLICT DO NOTHING`,
-      [userId, planId]
+      [userId, plan.id]
     );
 
     const currentPrice = await LaunchService.getCurrentPrice(plan.slug);
@@ -110,7 +110,7 @@ const UalaBisService = {
         `UPDATE subscriptions 
          SET provider_subscription_id = $1 
          WHERE user_id = $2 AND plan_id = $3 AND status = 'pending'`,
-        [data.uuid, userId, planId]
+        [data.uuid, userId, plan.id]
       );
     }
 

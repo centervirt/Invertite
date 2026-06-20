@@ -23,9 +23,9 @@ export const AuthProvider = ({ children }) => {
           setIsAuthenticated(true)
 
           // Validar sesión contra el servidor en segundo plano
-          const userData = await authService.me()
-          setUser(userData)
-          localStorage.setItem('invertite_user', JSON.stringify(userData))
+          const data = await authService.me()
+          setUser(data.user)
+          localStorage.setItem('invertite_user', JSON.stringify(data.user))
         } catch (err) {
           console.error('Error al verificar sesión:', err)
           // Si expira o falla, el Axios interceptor se encargará de refrescar o cerrar sesión
@@ -106,9 +106,9 @@ export const AuthProvider = ({ children }) => {
   // 5. Refrescar detalles de suscripción del usuario
   const refreshUser = async () => {
     try {
-      const userData = await authService.me()
-      setUser(userData)
-      localStorage.setItem('invertite_user', JSON.stringify(userData))
+      const data = await authService.me()
+      setUser(data.user)
+      localStorage.setItem('invertite_user', JSON.stringify(data.user))
     } catch (err) {
       console.error('Error al actualizar datos de usuario:', err)
     }

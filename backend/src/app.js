@@ -63,6 +63,17 @@ const authLimiter = (process.env.NODE_ENV === 'test' || process.env.NODE_ENV ===
       message: { success: false, message: 'Demasiados intentos. Esperá 15 minutos.' },
     });
 
+// Admin: 200 req / 15min por IP (específico para rutas de administración)
+const adminLimiter = (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development')
+  ? (req, res, next) => next()
+  : rateLimit({
+      windowMs:        15 * 60 * 1000,
+      max:             200,
+      standardHeaders: true,
+      legacyHeaders:   false,
+      message: { success: false, message: 'Demasiadas solicitudes administrativas. Intentá en 15 minutos.' },
+    });
+
 // ── Body parsers ──────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -91,7 +102,7 @@ app.use('/api/v1/quizzes',           require('./routes/quizzes.routes'));
 app.use('/api/v1/payments',          require('./routes/payments.routes'));
 app.use('/api/v1/tutor',             require('./routes/tutor.routes'));
 app.use('/api/v1/market',            require('./routes/market.routes'));
-app.use('/api/v1/admin',             require('./routes/admin.routes'));
+app.use('/api/v1/admin',             adminLimiter, require('./routes/admin.routes'));
 app.use('/api/v1/launch',            require('./routes/publicRoutes'));
 app.use('/api/v1/portfolio',         require('./routes/portfolio.routes'));
 app.use('/api/v1/content',           require('./routes/content.routes'));

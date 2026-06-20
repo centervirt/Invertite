@@ -44,7 +44,7 @@ const SubscriptionService = {
         current_period_start, current_period_end, created_at, updated_at
       ) VALUES ($1, $2, 'active', $3, $4, $5, NOW(), $6, NOW(), NOW())
       RETURNING id, user_id, plan_id, status, current_period_end`,
-      [userId, planId, provider, providerSubscriptionId || null, providerPaymentId || null, currentPeriodEnd]
+      [userId, plan.id, provider, providerSubscriptionId || null, providerPaymentId || null, currentPeriodEnd]
     );
 
     // 5. Invalidar caché del usuario en Redis

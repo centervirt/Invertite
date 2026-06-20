@@ -11,6 +11,11 @@ const adminService = {
     return data.data
   },
 
+  async getUsersWithParams(params) {
+    const { data } = await api.get('/admin/users', { params })
+    return data.data
+  },
+
   async getUserDetail(id) {
     const { data } = await api.get(`/admin/users/${id}`)
     return data.data
@@ -53,6 +58,16 @@ const adminService = {
 
   async togglePublishLesson(id, isPublished) {
     const { data } = await api.put(`/admin/lessons/${id}/publish`, { isPublished })
+    return data.data
+  },
+
+  async updateUserStatus(id, isActive) {
+    const { data } = await api.put(`/admin/users/${id}/status`, { isActive })
+    return data.data
+  },
+
+  async deleteUser(id) {
+    const { data } = await api.delete(`/admin/users/${id}`)
     return data.data
   }
 }

@@ -14,6 +14,8 @@ router.get('/users', adminCtrl.listUsers);
 router.get('/users/:id', adminCtrl.getUserDetail);
 router.put('/users/:id/subscription', adminCtrl.updateUserSubscription);
 router.post('/users/:id/reset', adminCtrl.resetUserProgress);
+router.put('/users/:id/status', adminCtrl.updateUserStatus);
+router.delete('/users/:id', adminCtrl.deactivateOrDeleteUser);
 
 // Contenido
 router.get('/modules', adminCtrl.listModules);

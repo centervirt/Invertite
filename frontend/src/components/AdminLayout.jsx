@@ -13,9 +13,12 @@ const AdminLayout = ({ children }) => {
   }
 
   const navItems = [
-    { name: 'Métricas', path: '/admin', icon: '📊', end: true },
+    { name: 'Overview', path: '/admin', icon: '📊', end: true },
     { name: 'Usuarios', path: '/admin/users', icon: '👥' },
-    { name: 'Contenido', path: '/admin/contenido', icon: '📝' },
+    { name: 'Pagos y suscripciones', path: '/admin/users?filter=sub', icon: '💰' },
+    { name: 'Contenido (módulos/lecciones)', path: '/admin/contenido', icon: '📚' },
+    { name: 'Estadísticas', path: '/admin', icon: '📈' },
+    { name: 'Configuración', path: '/admin/users', icon: '⚙️' },
   ]
 
   return (

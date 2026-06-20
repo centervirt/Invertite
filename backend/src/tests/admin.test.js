@@ -65,8 +65,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (studentId) await pool.query('DELETE FROM users WHERE id = $1', [studentId]);
-  if (adminId) await pool.query('DELETE FROM users WHERE id = $1', [adminId]);
+  if (studentId) {
+    await pool.query('DELETE FROM admin_actions_log WHERE target_user_id = $1 OR admin_user_id = $1', [studentId]);
+    await pool.query('DELETE FROM users WHERE id = $1', [studentId]);
+  }
+  if (adminId) {
+    await pool.query('DELETE FROM admin_actions_log WHERE target_user_id = $1 OR admin_user_id = $1', [adminId]);
+    await pool.query('DELETE FROM users WHERE id = $1', [adminId]);
+  }
   if (createdLessonId) await pool.query('DELETE FROM lessons WHERE id = $1', [createdLessonId]);
   if (createdModuleId) await pool.query('DELETE FROM modules WHERE id = $1', [createdModuleId]);
   await pool.end();
