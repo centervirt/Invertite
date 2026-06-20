@@ -30,16 +30,20 @@ El activo <b>${symbol || 'N/A'}</b> ha desencadenado una alerta de tipo <i>${ale
   }
 
   formatWeeklySummary(data) {
-    const { totalTrades, totalProfit, bestSymbol } = data;
-    return `<b>📊 RESUMEN SEMANAL INVERTITE</b>
+    const { content_json } = data;
+    if (!content_json) {
+      return `<b>📊 RESUMEN SEMANAL INVERTITE</b>\n\nResumen generado. Ingresa al dashboard para leerlo.`;
+    }
+
+    return `<b>📊 ${content_json.headline || 'RESUMEN SEMANAL INVERTITE'}</b>
     
-Esta semana los usuarios de Invertite han estado muy activos.
-✅ <b>Operaciones totales:</b> ${totalTrades || 0}
-💵 <b>Ganancia total acumulada:</b> $${totalProfit || '0.00'}
-🏆 <b>Activo más tradeado:</b> ${bestSymbol || 'N/A'}
+${content_json.intro || 'Esta semana tuvimos mucha volatilidad.'}
+
+<b>💡 Tip de la semana:</b>
+<i>${content_json.tip_of_week || 'Diversifica tu cartera.'}</i>
 
 ¡Preparate para una nueva semana de inversiones!
-<a href="https://invertite.neurasolutions.com.ar/dashboard">👉 Ingresar a tu cuenta</a>`;
+<a href="https://invertite.neurasolutions.com.ar/dashboard">👉 Ingresar a tu cuenta para leer el reporte completo</a>`;
   }
 
   formatDailySummary(data) {
