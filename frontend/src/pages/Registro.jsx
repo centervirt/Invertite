@@ -18,10 +18,13 @@ const Registro = () => {
   const targetPlan = location.state?.planSlug || 'mensual'
 
   useEffect(() => {
+    // Solo redirigir si el usuario YA estaba logueado al entrar a la página.
+    // Evita choques con el navigate() dentro de handleSubmit.
     if (isAuthenticated) {
       navigate('/dashboard', { replace: true })
     }
-  }, [isAuthenticated, navigate])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

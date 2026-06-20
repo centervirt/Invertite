@@ -17,10 +17,13 @@ const Login = () => {
   const from = location.state?.from?.pathname || '/dashboard'
 
   useEffect(() => {
+    // Solo redirigir si el usuario YA estaba logueado al entrar a la página.
+    // Evita choques con el navigate() dentro de handleSubmit.
     if (isAuthenticated) {
       navigate(from, { replace: true })
     }
-  }, [isAuthenticated, navigate, from])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
