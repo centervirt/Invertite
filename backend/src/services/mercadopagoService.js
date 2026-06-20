@@ -64,8 +64,10 @@ const MercadoPagoService = {
 
     const body = {
       preapproval_plan_id: undefined, // Opcional, definimos el plan ad-hoc
-      reason: `Invertite — Plan ${plan.name}`,
-      external_reference: `${userId}:${planId}`,
+      reason: plan.slug === 'yearly' 
+        ? "Invertite — Plan Anual (Educación financiera + Tutor IA)" 
+        : "Invertite — Plan Mensual (Educación financiera + Tutor IA)",
+      external_reference: `${userId}:${plan.slug}:${Date.now()}`,
       payer_email: user.email,
       auto_recurring: {
         frequency,
@@ -73,7 +75,7 @@ const MercadoPagoService = {
         transaction_amount: price,
         currency_id: 'ARS'
       },
-      back_url: `${FRONTEND_URL}/payment/status`,
+      back_url: `${FRONTEND_URL}/pago/resultado`,
       status: 'pending'
     };
 
@@ -127,6 +129,7 @@ const MercadoPagoService = {
         {
           id: plan.id,
           title: `Invertite — Acceso Vitalicio`,
+          description: "Acceso de por vida a todos los módulos, tutor IA y simulador de cartera",
           quantity: 1,
           currency_id: 'ARS',
           unit_price: price
@@ -135,11 +138,11 @@ const MercadoPagoService = {
       payer: {
         email: user.email
       },
-      external_reference: `${userId}:${planId}`,
+      external_reference: `${userId}:${plan.slug}:${Date.now()}`,
       back_urls: {
-        success: `${FRONTEND_URL}/payment/status?status=approved`,
-        failure: `${FRONTEND_URL}/payment/status?status=failure`,
-        pending: `${FRONTEND_URL}/payment/status?status=pending`
+        success: `${FRONTEND_URL}/pago/resultado?status=approved`,
+        failure: `${FRONTEND_URL}/pago/resultado?status=failure`,
+        pending: `${FRONTEND_URL}/pago/resultado?status=pending`
       },
       auto_return: 'all',
       notification_url: `${APP_URL}/api/v1/payments/mp/webhook`
