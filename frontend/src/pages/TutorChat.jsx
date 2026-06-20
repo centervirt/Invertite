@@ -9,13 +9,15 @@ const TypewriterText = ({ text }) => {
   const [displayedText, setDisplayedText] = useState('')
   
   useEffect(() => {
+    if (!text) return
     const words = text.split(' ')
     let idx = 0
     setDisplayedText('')
     
     const interval = setInterval(() => {
       if (idx < words.length) {
-        setDisplayedText(prev => prev + (prev ? ' ' : '') + words[idx])
+        const word = words[idx]
+        setDisplayedText(prev => prev + (prev ? ' ' : '') + word)
         idx++
       } else {
         clearInterval(interval)
