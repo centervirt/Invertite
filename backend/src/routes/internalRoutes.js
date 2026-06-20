@@ -89,19 +89,29 @@ router.get('/telegram/random-tip', requireInternalKey, async (req, res, next) =>
     
     // Extraer texto limpio del contenido (que podría ser JSON de EditorJS o HTML)
     let cleanContent = tip.content;
-    if (typeof cleanContent !== 'string') {
-      cleanContent = JSON.stringify(cleanContent);
+    
+    try {
+      if (typeof cleanContent === 'string') {
+        cleanContent = JSON.parse(cleanContent);
+      }
+      
+      // Si es un array (ej: [{"text": "..."}])
+      if (Array.isArray(cleanContent)) {
+        cleanContent = cleanContent.map(b => b.text || '').join(' ');
+      } 
+      // Si es objeto EditorJS
+      else if (cleanContent && cleanContent.blocks) {
+        cleanContent = cleanContent.blocks.map(b => b.data?.text || '').join(' ');
+      }
+      // Si no, lo volvemos string
+      else {
+        cleanContent = JSON.stringify(cleanContent);
+      }
+    } catch (e) {
+      // Era HTML crudo o texto plano, se mantiene como string
     }
     
-    if (cleanContent.includes('{"time":')) {
-      try {
-        const blocks = JSON.parse(cleanContent).blocks;
-        cleanContent = blocks.map(b => b.data.text || '').join(' ').replace(/<[^>]*>?/gm, '');
-      } catch(e) {}
-    } else {
-      cleanContent = cleanContent.replace(/<[^>]*>?/gm, '');
-    }
-    
+    cleanContent = String(cleanContent).replace(/<[^>]*>?/gm, '');
     return res.json({ 
       title: tip.title, 
       content: cleanContent.substring(0, 150) + '...'
