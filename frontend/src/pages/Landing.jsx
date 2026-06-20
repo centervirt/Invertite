@@ -238,6 +238,13 @@ const Landing = () => {
               Comenzar gratis
             </Link>
           </div>
+          <div className="hero-telegram">
+            <a href="https://t.me/invertite_mercado" target="_blank" rel="noopener noreferrer" className="telegram-link">
+              <span className="telegram-icon">📡</span>
+              ¿Todavía no estás listo para suscribirte? 
+              <strong>Sumate gratis a nuestro canal de Telegram</strong>
+            </a>
+          </div>
         </div>
 
         {/* Stats */}
@@ -347,6 +354,68 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* ── SECCIÓN TELEGRAM ── */}
+      <div className="telegram-section">
+        <div className="telegram-inner">
+          <div className="telegram-content">
+            <div className="eyebrow-label">100% gratis</div>
+            <h2 className="section-h">
+              Sumate al canal antes<br/>de suscribirte
+            </h2>
+            <p className="section-p" style={{marginBottom: '1.5rem'}}>
+              Alertas de mercado, resúmenes diarios y tips educativos 
+              directo a tu Telegram. Sin pagar nada. Así vas conociendo 
+              cómo trabajamos antes de dar el siguiente paso.
+            </p>
+            <div className="telegram-features">
+              <div className="tf-item">
+                <span className="tf-icon">🚨</span>
+                <span>Alertas en tiempo real del dólar y tasas</span>
+              </div>
+              <div className="tf-item">
+                <span className="tf-icon">📈</span>
+                <span>Resumen diario del cierre del mercado</span>
+              </div>
+              <div className="tf-item">
+                <span className="tf-icon">💡</span>
+                <span>Tips educativos dos veces por semana</span>
+              </div>
+            </div>
+            <a href="https://t.me/invertite_mercado" target="_blank" rel="noopener noreferrer" className="btn-telegram">
+              <span className="telegram-icon-btn">📡</span>
+              Unirme al canal gratis
+            </a>
+          </div>
+          <div className="telegram-preview">
+            <div className="tg-mockup">
+              <div className="tg-mockup-header">
+                <div className="tg-avatar">IT</div>
+                <div>
+                  <div className="tg-channel-name">Invertite | Mercado Argentino</div>
+                  <div className="tg-channel-members">1.247 suscriptores</div>
+                </div>
+              </div>
+              <div className="tg-message">
+                <div className="tg-msg-emoji">📊</div>
+                <div className="tg-msg-text">
+                  <strong>Mercado Argentino — Hoy</strong><br/>
+                  💵 MEP: $1.287 | Blue: $1.310<br/>
+                  📈 Caución 1d: 38.5% TNA
+                </div>
+              </div>
+              <div className="tg-message">
+                <div className="tg-msg-emoji">⚠️</div>
+                <div className="tg-msg-text">
+                  <strong>El dólar MEP subió 2.3%</strong><br/>
+                  Si tenés pesos, puede ser momento de revisar 
+                  tu cobertura cambiaria.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── LAUNCH BANNER ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 -mb-8 relative z-10">
         <LaunchBanner />
@@ -436,6 +505,11 @@ const Landing = () => {
           
           <div className="flex flex-col sm:flex-row justify-between items-center border-b border-slate-900 pb-8 gap-4">
             <span className="text-xl font-black text-white">INVERT<span className="text-accent-teal">ITE</span></span>
+            <div className="foot-links">
+              <a href="https://t.me/invertite_mercado" target="_blank" rel="noopener noreferrer" className="foot-telegram-link">
+                📡 Canal de Telegram
+              </a>
+            </div>
             <p className="text-xs text-slate-600 font-medium">© 2026 Invertite. Todos los derechos reservados.</p>
           </div>
 
