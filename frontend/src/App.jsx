@@ -26,13 +26,7 @@ import Simulator from './pages/Simulator'
 import Ranking from './pages/Ranking'
 
 // Guard para redirigir a dashboard si el usuario ya está autenticado (para login/registro)
-const PublicOnlyRoute = ({ children }) => {
-  const { isAuthenticated } = useAuth()
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />
-  }
-  return children
-}
+// (Implementado localmente en los componentes Login y Registro para evitar race conditions con React Router)
 
 function App() {
   return (
@@ -43,17 +37,9 @@ function App() {
           {/* Rutas Públicas */}
           <Route path="/" element={<Landing />} />
           
-          <Route path="/login" element={
-            <PublicOnlyRoute>
-              <Login />
-            </PublicOnlyRoute>
-          } />
+          <Route path="/login" element={<Login />} />
           
-          <Route path="/registro" element={
-            <PublicOnlyRoute>
-              <Registro />
-            </PublicOnlyRoute>
-          } />
+          <Route path="/registro" element={<Registro />} />
 
           {/* Rutas Privadas — Sin requerir suscripción (ej: Perfil, Checkout, etc.) */}
           <Route path="/pagar/:planSlug" element={

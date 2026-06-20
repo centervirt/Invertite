@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useEffect } from 'react'
 
 const Login = () => {
-  const { login } = useAuth()
+  const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -14,6 +15,12 @@ const Login = () => {
 
   // Redireccionar al destino anterior si existe (por ejemplo, después de ser interceptado por PrivateRoute)
   const from = location.state?.from?.pathname || '/dashboard'
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, navigate, from])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
