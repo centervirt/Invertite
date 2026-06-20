@@ -48,4 +48,67 @@ router.post('/market-snapshot', requireInternalKey, async (req, res, next) => {
   }
 });
 
+// POST /api/v1/internal/telegram/publish
+router.post('/telegram/publish', requireInternalKey, async (req, res, next) => {
+  try {
+    const { type, data } = req.body;
+    if (!type || !data) {
+      return res.status(400).json({ error: 'type and data are required' });
+    }
+    
+    const telegramService = require('../services/telegramService');
+    const result = await telegramService.publish(type, data);
+    
+    if (result.success) {
+      return res.json(result);
+    } else {
+      // Retornar 200 de todas formas para no romper n8n, 
+      // pero indicar success: false en el body.
+      return res.json(result);
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/v1/internal/telegram/random-tip
+router.get('/telegram/random-tip', requireInternalKey, async (req, res, next) => {
+  try {
+    const { queryOne } = require('../config/database');
+    const tip = await queryOne(`
+      SELECT title, content_json as content 
+      FROM lessons 
+      WHERE is_published = true 
+      ORDER BY RANDOM() 
+      LIMIT 1
+    `);
+    
+    if (!tip) {
+      return res.json({ title: 'Aprende a invertir', content: 'Descubre los módulos en Invertite.' });
+    }
+    
+    // Extraer texto limpio del contenido (que podría ser JSON de EditorJS o HTML)
+    let cleanContent = tip.content;
+    if (typeof cleanContent !== 'string') {
+      cleanContent = JSON.stringify(cleanContent);
+    }
+    
+    if (cleanContent.includes('{"time":')) {
+      try {
+        const blocks = JSON.parse(cleanContent).blocks;
+        cleanContent = blocks.map(b => b.data.text || '').join(' ').replace(/<[^>]*>?/gm, '');
+      } catch(e) {}
+    } else {
+      cleanContent = cleanContent.replace(/<[^>]*>?/gm, '');
+    }
+    
+    return res.json({ 
+      title: tip.title, 
+      content: cleanContent.substring(0, 150) + '...'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
