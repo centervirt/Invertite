@@ -30,7 +30,17 @@ El activo <b>${symbol || 'N/A'}</b> ha desencadenado una alerta de tipo <i>${ale
   }
 
   formatWeeklySummary(data) {
-    const { content_json } = data;
+    let { content_json } = data;
+    
+    // Si N8N lo mandó como un string crudo por limitaciones del JSON de la interfaz, lo parseamos
+    if (typeof content_json === 'string') {
+      try {
+        content_json = JSON.parse(content_json);
+      } catch (e) {
+        console.warn('Telegram: Falló el parseo del content_json del Resumen Semanal', e);
+      }
+    }
+
     if (!content_json) {
       return `<b>📊 RESUMEN SEMANAL INVERTITE</b>\n\nResumen generado. Ingresa al dashboard para leerlo.`;
     }
