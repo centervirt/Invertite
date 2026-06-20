@@ -374,7 +374,7 @@ const Landing = () => {
               </div>
               <div className="tf-item">
                 <span className="tf-icon">📈</span>
-                <span>Resumen diario del cierre del mercado</span>
+                <span>Actualizaciones del mercado durante el día</span>
               </div>
               <div className="tf-item">
                 <span className="tf-icon">💡</span>
