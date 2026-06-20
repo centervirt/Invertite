@@ -7,8 +7,8 @@ const SubscriptionService = require('./subscriptionService');
 const LaunchService = require('./launchService');
 const crypto = require('crypto');
 
-const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN;
-const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET;
+const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
+const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET || process.env.MERCADOPAGO_WEBHOOK_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 const APP_URL = process.env.APP_URL || 'http://localhost:3001';
 
