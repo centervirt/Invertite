@@ -33,7 +33,9 @@
         304
       ],
       "id": "f7a0154b-efe2-4f63-a8a3-bd0ddee74b8b",
-      "onError": "ignore"
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -56,7 +58,10 @@
         480,
         192
       ],
-      "id": "6082c08f-eaf2-4685-b539-c9c808d3dc9a"
+      "id": "6082c08f-eaf2-4685-b539-c9c808d3dc9a",
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -84,7 +89,9 @@
         192
       ],
       "id": "76e75e70-b2e8-462a-9d4e-4f247a175b0d",
-      "onError": "ignore"
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -99,12 +106,14 @@
         304
       ],
       "id": "382663d4-b346-499b-894f-63efcad549ce",
-      "onError": "ignore"
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={{ $('Webhook').item.json.body ? $('Webhook').item.json.body.gemini_api_key : $('Webhook').item.json.gemini_api_key }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -116,7 +125,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"model\": \"models/gemini-embedding-001\", \"content\": {\"parts\": [{\"text\": \"{{ $('Webhook').item.json.question }}\"}]}}",
+        "jsonBody": "={\"model\": \"models/gemini-embedding-001\", \"content\": {\"parts\": [{\"text\": \"{{ $('Webhook').item.json.body ? $('Webhook').item.json.body.question : $('Webhook').item.json.question }}\"}]}}",
         "options": {}
       },
       "name": "Generar Embedding",
@@ -127,7 +136,9 @@
         304
       ],
       "id": "embed-question-id-123",
-      "onError": "ignore"
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -146,7 +157,9 @@
         304
       ],
       "id": "d4681e68-1308-44c0-9b66-83a4de46fb2e",
-      "onError": "ignore"
+      "settings": {
+        "onError": "continueRegularOutput"
+      }
     },
     {
       "parameters": {
@@ -164,7 +177,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={{ $('Webhook').item.json.body ? $('Webhook').item.json.body.gemini_api_key : $('Webhook').item.json.gemini_api_key }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -176,7 +189,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"Sos el tutor financiero de Invertite, una plataforma de educación financiera para argentinos que dan sus primeros pasos en el mundo de las inversiones.\\n\\nTU ROL:\\n- Explicás conceptos financieros en lenguaje simple, sin jerga innecesaria\\n- Usás ejemplos siempre en pesos argentinos y referencias al mercado local\\n- Hablás en voseo argentino (vos, tenés, podés, etc.)\\n- Sos paciente, motivador y nunca hacés sentir al usuario ignorante\\n\\nRESTRICCIONES IMPORTANTES:\\n- NUNCA das recomendaciones de inversión específicas como 'comprá tal acción'\\n- SIEMPRE aclará que el contenido es educativo, no asesoramiento financiero\\n- Usá SOLO los datos del contexto provisto para hablar de precios y tasas actuales\\n- Si no tenés el dato exacto, decilo honestamente\\n- No hablés de temas fuera de educación financiera\\n\\nFORMATO DE RESPUESTA:\\n- Usá un tono cercano y motivador\\n- Máximo 3 párrafos por respuesta\\n- Si usás datos de mercado, citá la fuente (ej: 'según BCRA')\\n- Terminá siempre con una pregunta o sugerencia de próximo paso\"\n    }]\n  },\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": \"CONTEXTO DE MERCADO Y EDUCATIVO:\\n{{ $json.context }}\\n\\nPREGUNTA DEL USUARIO:\\n{{ $json.question }}\"\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 8192,\n    \"topP\": 0.8\n  }\n}",
+        "jsonBody": "={\n  \"system_instruction\": {\n    \"parts\": [{\n      \"text\": \"Sos el tutor financiero de Invertite, una plataforma de educación financiera para argentinos que dan sus primeros pasos en el mundo de las inversiones.\\n\\nTU ROL:\\n- Explicás conceptos financieros en lenguaje simple, sin jerga innecesaria\\n- Usás ejemplos siempre en pesos argentinos y referencias al mercado local\\n- Hablás en voseo argentino (vos, tenés, podés, etc.)\\n- Sos paciente, motivador y nunca hacés sentir al usuario ignorante\\n\\nRESTRICCIONES IMPORTANTES:\\n- NUNCA das recomendaciones de inversión específicas como 'comprá tal acción'\\n- SIEMPRE aclará que el contenido es educativo, no asesoramiento financiero\\n- Usá SOLO los datos del contexto provisto para hablar de precios y tasas actuales\\n- Si no tenés el dato exacto, decilo honestamente\\n- No hablés de temas fuera de educación financiera\\n\\nFORMATO DE RESPUESTA:\\n- Usá un tono cercano y motivador\\n- Máximo 3 párrafos por respuesta\\n- Si usás datos de mercado, citá la fuente (ej: 'según BCRA')\\n- Terminá siempre con una pregunta o sugerencia de próximo paso\"\n    }]\n  },\n  \"contents\": [{\n    \"parts\": [{\n      \"text\": {{ JSON.stringify(\"CONTEXTO DE MERCADO Y EDUCATIVO:\\n\" + $json.context + \"\\n\\nPREGUNTA DEL USUARIO:\\n\" + $json.question) }}\n    }]\n  }],\n  \"generationConfig\": {\n    \"temperature\": 0.3,\n    \"maxOutputTokens\": 8192,\n    \"topP\": 0.8\n  }\n}",
         "options": {}
       },
       "name": "Llamar a Gemini API",
@@ -190,7 +203,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const geminiResponse = $input.item.json;\nlet reply = '';\n\ntry {\n  reply = geminiResponse.candidates[0].content.parts[0].text;\n} catch(e) {\n  reply = 'Lo siento, no pude procesar tu pregunta en este momento. Intentá de nuevo en unos segundos.';\n}\n\n// Determinar fuentes usadas\nconst sources = [];\nconst ctx = $('Code - Ensamblar contexto').item.json.context;\nif (ctx.includes('MEP:') && !ctx.includes('No disponible')) {\n  sources.push({ name: 'Dolarito.ar', type: 'dolar' });\n}\nif (ctx.includes('TNA') && !ctx.includes('No disponible')) {\n  sources.push({ name: 'BCRA', type: 'caucion' });\n}\n\nreturn [{\n  json: {\n    reply,\n    sources,\n    timestamp: new Date().toISOString(),\n    model: 'gemini-2.5-flash'\n  }\n}];"
+        "jsCode": "const geminiResponse = $input.item.json;\nlet reply = '';\n\ntry {\n  reply = geminiResponse.candidates[0].content.parts[0].text;\n} catch(e) {\n  reply = 'Lo siento, no pude procesar tu pregunta en este momento. Intentá de nuevo en unos segundos.';\n}\n\n// Determinar fuentes usadas\nconst sources = [];\nconst ctx = $('Code - Ensamblar contexto').item.json.context;\nif (ctx.includes('MEP:') && !ctx.includes('No disponible')) {\n  sources.push({ title: 'Dolarito.ar', url: 'https://www.dolarito.ar' });\n}\nif (ctx.includes('TNA') && !ctx.includes('No disponible')) {\n  sources.push({ title: 'BCRA', url: 'https://www.bcra.gob.ar' });\n}\n\nreturn [{\n  json: {\n    reply,\n    sources,\n    timestamp: new Date().toISOString(),\n    model: 'gemini-2.5-flash'\n  }\n}];"
       },
       "name": "Code - Extraer respuesta",
       "type": "n8n-nodes-base.code",

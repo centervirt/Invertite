@@ -19,7 +19,8 @@ const N8nRagService = {
       const body = {
         question,
         lesson_module: lessonContext?.moduleTitle || lessonContext?.moduleSlug || null,
-        user_level: 'beginner'
+        user_level: 'beginner',
+        gemini_api_key: process.env.GEMINI_API_KEY
       };
 
       const response = await fetch(N8N_WEBHOOK_URL, {
