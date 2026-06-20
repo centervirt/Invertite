@@ -26,7 +26,7 @@ El activo <b>${symbol || 'N/A'}</b> ha desencadenado una alerta de tipo <i>${ale
 💰 <b>Precio actual:</b> $${price || 'N/A'}
 ⏱️ <b>Hora:</b> ${timestamp ? new Date(timestamp).toLocaleString('es-AR') : new Date().toLocaleString('es-AR')}
 
-<a href="https://invertite.ar/dashboard">👉 Ir al Dashboard</a>`;
+<a href="https://invertite.neurasolutions.com.ar/dashboard">👉 Ir al Dashboard</a>`;
   }
 
   formatWeeklySummary(data) {
@@ -39,7 +39,7 @@ Esta semana los usuarios de Invertite han estado muy activos.
 🏆 <b>Activo más tradeado:</b> ${bestSymbol || 'N/A'}
 
 ¡Preparate para una nueva semana de inversiones!
-<a href="https://invertite.ar/dashboard">👉 Ingresar a tu cuenta</a>`;
+<a href="https://invertite.neurasolutions.com.ar/dashboard">👉 Ingresar a tu cuenta</a>`;
   }
 
   formatDailySummary(data) {
@@ -51,7 +51,7 @@ Esta semana los usuarios de Invertite han estado muy activos.
 📊 <b>MERVAL:</b> ${mervalVar > 0 ? '+' : ''}${mervalVar || '0'}%
 
 La bolsa porteña y el tipo de cambio cerraron la jornada. Mantenete al tanto en Invertite.
-<a href="https://invertite.ar/dashboard">👉 Ir al Simulador</a>`;
+<a href="https://invertite.neurasolutions.com.ar/dashboard">👉 Ir al Simulador</a>`;
   }
 
   formatEducationalTip(data) {
@@ -62,7 +62,7 @@ La bolsa porteña y el tipo de cambio cerraron la jornada. Mantenete al tanto en
 ${content || 'Aprende a invertir paso a paso con Invertite.'}
 
 📚 ¿Querés saber más? Revisá el Módulo 1 completo en la plataforma.
-<a href="https://invertite.ar/modulos">👉 Ir al Curso</a>`;
+<a href="https://invertite.neurasolutions.com.ar/modulos">👉 Ir al Curso</a>`;
   }
 
   getFormatter(type) {
