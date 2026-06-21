@@ -30,7 +30,7 @@ const WeeklySummary = () => {
 
   if (!data || !data.summary) return null
 
-  const { headline, intro, sections, tip_of_week, market_data_snapshot } = data.summary
+  const { headline, intro, sections = [], tip_of_week, market_data_snapshot } = data.summary
   const dateFormatted = new Date(data.week_start).toLocaleDateString('es-AR', {
     day: 'numeric',
     month: 'long',
