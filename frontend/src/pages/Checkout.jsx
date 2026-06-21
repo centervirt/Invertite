@@ -83,7 +83,10 @@ const CheckoutFlow = ({ planSlug }) => {
       const dbSlugMap = {
         mensual: 'monthly',
         anual: 'yearly',
-        vitalicio: 'lifetime'
+        vitalicio: 'lifetime',
+        monthly: 'monthly',
+        yearly: 'yearly',
+        lifetime: 'lifetime'
       }
       const slug = dbSlugMap[planSlug] || 'monthly'
       
@@ -111,7 +114,10 @@ const CheckoutFlow = ({ planSlug }) => {
       const dbSlugMap = {
         mensual: 'monthly',
         anual: 'yearly',
-        vitalicio: 'lifetime'
+        vitalicio: 'lifetime',
+        monthly: 'monthly',
+        yearly: 'yearly',
+        lifetime: 'lifetime'
       }
       const slug = dbSlugMap[planSlug] || 'monthly'
       
@@ -139,7 +145,10 @@ const CheckoutFlow = ({ planSlug }) => {
       const dbSlugMap = {
         mensual: 'monthly',
         anual: 'yearly',
-        vitalicio: 'lifetime'
+        vitalicio: 'lifetime',
+        monthly: 'monthly',
+        yearly: 'yearly',
+        lifetime: 'lifetime'
       }
       const slug = dbSlugMap[planSlug] || 'monthly'
 

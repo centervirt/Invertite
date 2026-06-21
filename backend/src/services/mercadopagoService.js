@@ -75,7 +75,10 @@ const MercadoPagoService = {
         transaction_amount: price,
         currency_id: 'ARS'
       },
-      back_url: `${FRONTEND_URL}/pago/resultado`,
+      // Mercado Pago Preapproval requiere HTTPS válido, rechaza localhost.
+      back_url: FRONTEND_URL.includes('localhost') 
+        ? 'https://invertite.com/pago/resultado' 
+        : `${FRONTEND_URL}/pago/resultado`,
       status: 'pending'
     };
 
