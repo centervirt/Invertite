@@ -24,8 +24,12 @@ router.post('/alerts/broadcast', alertController.broadcastAlert);
 // GET /api/v1/internal/market-snapshot/previous
 router.get('/market-snapshot/previous', requireInternalKey, async (req, res, next) => {
   try {
-    const snapshot = await redis.get('market:snapshot:previous');
-    if (!snapshot) {
+    let snapshot = await redis.get('market:snapshot:previous');
+    if (typeof snapshot === 'string') {
+      try { snapshot = JSON.parse(snapshot); } catch (e) {}
+    }
+
+    if (!snapshot || !snapshot.mep || snapshot.mep === 0) {
       const MarketDataService = require('../services/marketDataService');
       const mep = await MarketDataService.getPrice('MEP', 'dolar');
       const blue = await MarketDataService.getPrice('BLUE', 'dolar');
@@ -37,7 +41,7 @@ router.get('/market-snapshot/previous', requireInternalKey, async (req, res, nex
         timestamp: new Date().toISOString()
       });
     }
-    return res.json(typeof snapshot === 'string' ? JSON.parse(snapshot) : snapshot);
+    return res.json(snapshot);
   } catch (err) {
     next(err);
   }
