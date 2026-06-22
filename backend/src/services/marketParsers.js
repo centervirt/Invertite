@@ -39,9 +39,10 @@ const parseBluelytics = (data, ticker) => {
     if (t === 'oficial' && data.oficial) {
       return { price: parseFloat(data.oficial.value_sell), currency: 'ARS', ticker };
     }
-    if ((t === 'mep' || t === 'ccl') && data.blue && data.oficial) {
-      const estimate = parseFloat(data.blue.value_sell) * 0.97;
-      return { price: Math.round(estimate), currency: 'ARS', ticker };
+    if ((t === 'mep' || t === 'ccl')) {
+      // Bluelytics no provee MEP ni CCL. 
+      // Retornamos null para que el MarketDataService use el fallback (DolarApi)
+      return null;
     }
     return null;
   } catch (err) {
@@ -255,12 +256,15 @@ const parseDolarApi = (data, ticker) => {
       return { price: parseFloat(data.venta), currency: 'ARS', ticker };
     }
     if (Array.isArray(data)) {
-      // A veces devuelve array de cotizaciones
-      const t = ticker.toLowerCase();
+      // DolarApi devuelve un array cuando se llama a /v1/dolares
+      let t = ticker.toLowerCase();
+      // Mapeo interno para dolarapi
+      if (t === 'mep') t = 'bolsa';
+      if (t === 'ccl') t = 'contadoconliqui';
+
       const item = data.find(d =>
-        (d.nombre || '').toLowerCase().includes(t) ||
         (d.casa || '').toLowerCase() === t
-      ) || data[0];
+      );
       if (item && item.venta) {
         return { price: parseFloat(item.venta), currency: 'ARS', ticker };
       }

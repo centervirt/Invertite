@@ -18,7 +18,7 @@ module.exports = {
     },
     fallback: {
       name: 'dolarapi',
-      url: 'https://dolarapi.com/v1/dolares/blue',
+      url: 'https://dolarapi.com/v1/dolares',
       parser: 'parseDolarApi'
     }
   },
