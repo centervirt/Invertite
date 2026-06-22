@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN;
 const MP_WEBHOOK_SECRET = process.env.MP_WEBHOOK_SECRET || process.env.MERCADOPAGO_WEBHOOK_SECRET;
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').trim().replace(/\/+$/, '');
 const APP_URL = process.env.APP_URL || 'http://localhost:3001';
 
 // Helper para llamadas HTTP fetch a Mercado Pago
@@ -76,9 +76,7 @@ const MercadoPagoService = {
         currency_id: 'ARS'
       },
       // Mercado Pago Preapproval requiere HTTPS válido, rechaza localhost.
-      back_url: FRONTEND_URL.includes('localhost') 
-        ? 'https://invertite.com/pago/resultado' 
-        : `${FRONTEND_URL}/pago/resultado`,
+      back_url: `${FRONTEND_URL}/pago/resultado`,
       status: 'pending'
     };
 
