@@ -24,6 +24,7 @@ import Portfolio from './pages/Portfolio'
 import AlertsPage from './pages/AlertsPage'
 import Simulator from './pages/Simulator'
 import Ranking from './pages/Ranking'
+import InvestorProfile from './pages/onboarding/InvestorProfile'
 
 // Guard para redirigir a dashboard si el usuario ya está autenticado (para login/registro)
 // (Implementado localmente en los componentes Login y Registro para evitar race conditions con React Router)
@@ -57,6 +58,12 @@ function App() {
           <Route path="/perfil" element={
             <PrivateRoute requireSub={false}>
               <Profile />
+            </PrivateRoute>
+          } />
+
+          <Route path="/bienvenida" element={
+            <PrivateRoute requireSub={false}>
+              <InvestorProfile />
             </PrivateRoute>
           } />
 

@@ -109,6 +109,7 @@ app.use('/api/v1/content',           require('./routes/content.routes'));
 app.use('/api/v1/alerts',            require('./routes/alert.routes'));
 app.use('/api/v1/internal',          require('./routes/internalRoutes'));
 app.use('/api/v1/simulator',         require('./routes/simulator.routes'));
+app.use('/api/v1/onboarding',        require('./routes/onboarding.routes'));
 
 
 // ── 404 ───────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useEffect } from 'react'
+import onboardingService from '../services/onboardingService'
 
 const Login = () => {
   const { login, isAuthenticated } = useAuth()
@@ -32,7 +33,19 @@ const Login = () => {
 
     try {
       const loggedUser = await login(email, password)
-      const target = loggedUser?.role === 'admin' && from === '/dashboard' ? '/admin' : from
+      let target = loggedUser?.role === 'admin' && from === '/dashboard' ? '/admin' : from
+
+      if (loggedUser?.role !== 'admin' && from === '/dashboard') {
+        try {
+          const res = await onboardingService.getStatus()
+          if (res && !res.onboardingCompleted) {
+            target = '/bienvenida'
+          }
+        } catch (err) {
+          console.error('Error checking onboarding status:', err)
+        }
+      }
+
       navigate(target, { replace: true })
     } catch (err) {
       console.error(err)

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import onboardingService from '../services/onboardingService'
 
 const PaymentResult = () => {
   const [searchParams] = useSearchParams()
@@ -17,18 +18,36 @@ const PaymentResult = () => {
     if (status === 'approved') {
       refreshUser()
       
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer)
-            navigate('/dashboard', { replace: true })
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
+      let nextRoute = '/dashboard'
+      let timerInterval
 
-      return () => clearInterval(timer)
+      const checkOnboarding = async () => {
+        try {
+          const res = await onboardingService.getStatus()
+          if (res && !res.onboardingCompleted) {
+            nextRoute = '/bienvenida'
+          }
+        } catch (err) {
+          console.error('Error checking onboarding status:', err)
+        }
+
+        timerInterval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timerInterval)
+              navigate(nextRoute, { replace: true })
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      }
+      
+      checkOnboarding()
+
+      return () => {
+        if (timerInterval) clearInterval(timerInterval)
+      }
     }
   }, [status, navigate, refreshUser])
 

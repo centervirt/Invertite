@@ -86,7 +86,7 @@ const AlertBell = () => {
   }
 
   return (
-    <div className="relative select-none" ref={dropdownRef}>
+    <div className="relative select-none" ref={dropdownRef} id="tour-alerts-bell">
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"

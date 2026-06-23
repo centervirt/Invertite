@@ -7,6 +7,9 @@ import userService from '../services/userService'
 import tutorService from '../services/tutorService'
 import api from '../services/api'
 import toast from 'react-hot-toast'
+import GuidedTour from '../components/onboarding/GuidedTour'
+import onboardingService from '../services/onboardingService'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 const Dashboard = () => {
   const { user } = useAuth()
@@ -14,6 +17,11 @@ const Dashboard = () => {
   const [tickerData, setTickerData] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [portfolio, setPortfolio] = useState(null)
+  
+  const [showTour, setShowTour] = useState(false)
+  const [profileLabel, setProfileLabel] = useState(null)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   // Tutor IA widget state
   const [tutorMessages, setTutorMessages] = useState([])
@@ -70,6 +78,30 @@ const Dashboard = () => {
     const init = async () => {
       setIsLoading(true)
       await Promise.all([loadDashboardData(), loadTickerData(), loadTutorHistory(), loadPortfolio()])
+      
+      try {
+        const obs = await onboardingService.getStatus()
+        console.log('Onboarding status:', obs)
+        if (obs) {
+          if (!obs.onboardingCompleted && !obs.hasProfile) {
+            console.log('Redirecting to /bienvenida from dashboard')
+            navigate('/bienvenida', { replace: true })
+            return
+          }
+          
+          setProfileLabel(obs.profileLabel)
+          const params = new URLSearchParams(location.search)
+          if (params.get('startTour') === 'true' || params.get('tour') === '1') {
+            setShowTour(true)
+          } else if (!obs.onboardingCompleted && obs.hasProfile) {
+            // Si tiene perfil pero no lo completó (no saltó/terminó el tour)
+            setShowTour(true)
+          }
+        }
+      } catch (err) {
+        console.error('Error al chequear onboarding status en dashboard:', err)
+      }
+
       setIsLoading(false)
     }
     init()
@@ -141,14 +173,25 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Saludo */}
+        {/* Saludo y Perfil */}
         <div>
           <h1 className="text-3xl font-black text-white">¡Hola, {user?.fullName || 'Inversor'}! 👋</h1>
-          <p className="text-xs text-slate-400 mt-1 font-light">Seguí sumando conocimientos financieros hoy.</p>
+          {profileLabel ? (
+            <div className="mt-2 flex items-center space-x-2">
+              <span className="bg-slate-900 border border-slate-700 px-3 py-1 rounded-full text-xs font-bold text-slate-300 flex items-center shadow-sm">
+                🏷️ Tu perfil: <span className="text-white ml-1">{profileLabel}</span>
+              </span>
+              <Link to="/bienvenida" className="text-[10px] text-accent-teal hover:underline">
+                (cambiar)
+              </Link>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 mt-1 font-light">Seguí sumando conocimientos financieros hoy.</p>
+          )}
         </div>
 
         {/* Tarjetas de Progreso */}
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-3 gap-6" id="tour-dashboard-progress">
           <div className="bg-invertite-card border border-slate-900 p-6 rounded-2xl space-y-3">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Progreso Total</span>
             <div className="flex items-baseline space-x-2">
@@ -314,10 +357,11 @@ const Dashboard = () => {
 
         {/* Resumen Semanal IA */}
         <WeeklySummary />
-
       </div>
+      {showTour && (
+        <GuidedTour onComplete={() => setShowTour(false)} />
+      )}
     </DashboardLayout>
-
   )
 }
 

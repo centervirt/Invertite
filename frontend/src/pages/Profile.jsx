@@ -329,6 +329,20 @@ const Profile = () => {
               )}
             </div>
 
+            {/* Repasar Tour */}
+            <div className="bg-invertite-card border border-slate-900 rounded-3xl p-6 shadow-xl flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white">¿Querés repasar cómo funciona Invertite?</h3>
+                <p className="text-xs text-slate-400 mt-1">Volvé a ver el tour guiado por la plataforma.</p>
+              </div>
+              <Link
+                to="/dashboard?startTour=true"
+                className="py-2.5 px-6 bg-accent-teal/10 hover:bg-accent-teal/20 border border-accent-teal/30 text-accent-teal text-xs font-bold rounded-xl transition-all whitespace-nowrap ml-4"
+              >
+                Ver tour guiado de nuevo →
+              </Link>
+            </div>
+
             {/* Estadísticas Rápidas */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-invertite-card border border-slate-900 rounded-2xl p-4 text-center space-y-1">
